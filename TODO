@@ -1,0 +1,9 @@
+create UI for STL expression check
+migrate parser and lexer from STL Script to STL API
+
+
+Future:
+add timestamp field to the signal, set mode
+
+Done:
+use decorator for Signal properties
