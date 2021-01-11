@@ -25,9 +25,9 @@ Usage:
 
 class Interpreter:
 
-    def __init__(self, time_begin: int, signal: Signal,
+    def __init__(self, global_begin_time: int, signal: Signal,
                  lexer: Optional[Lexer] = Lexer(), parser: Optional[Parser] = Parser(), debug: bool = False):
-        self.time_begin = time_begin
+        self.global_begin_time = global_begin_time
         self.signal = signal
         self.lexer = lexer
         self.parser = parser
@@ -40,13 +40,13 @@ class Interpreter:
 
         # initialize type context, type check the AST
         type_ctx = ctx.Type_Context.get_empty_context()
-        type_ctx.add(ast.Id_Val("time_begin"), types.Int)
-        type_ctx.add(ast.Id_Val("signal"), types.Signal)
+        type_ctx.add(ast.Id_Val("global_begin_time"), types.Int())
+        type_ctx.add(ast.Id_Val("signal"), types.Signal())
         parsed_expr.type_check(type_ctx)
 
         # initialize the evaluation context, evaluate the AST
         eval_ctx = ctx.Eval_Context.get_empty_context()
-        eval_ctx.add(ast.Id_Val("time_begin"), Int_Val(self.time_begin))
+        eval_ctx.add(ast.Id_Val("global_begin_time"), Int_Val(str(self.global_begin_time)))
         eval_ctx.add(ast.Id_Val("signal"), self.signal)
 
         low_level_eval_result = parsed_expr.eval(eval_ctx)
@@ -60,8 +60,8 @@ class Interpreter:
 
 
 def main():
-    time_begin = 0
-    tool.print_warning("Time Start: " + str(time_begin))
+    global_begin_time = 0
+    tool.print_warning("Time Start: " + str(global_begin_time))
 
     signal = Signal(py_dict={"0": {"content": {"x": 1, "y": 2}}, "1": {"content": {"x": 2, "y": 1}}})
 
@@ -85,7 +85,7 @@ def main():
     print(signal)
 
     # note that debug mode allows interpreter to print the low-level AST instead of the high-level Eval_Result
-    interpreter = Interpreter(time_begin, signal, debug=False)  # also initialize lexer and parser
+    interpreter = Interpreter(global_begin_time, signal, debug=False)  # also initialize lexer and parser
 
     for expr in tool.repl(header="Please enter STL expressions to be interpreted."):
         print(interpreter.interpret(expr))

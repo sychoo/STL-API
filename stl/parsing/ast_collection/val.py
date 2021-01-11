@@ -11,14 +11,15 @@ from stl.tool import String_Builder
 from stl.parsing.ast_collection.core import Val, Primitive_Val
 import stl.parsing.type as types
 from stl.obj.result import Val_Eval_Result
+import stl.error as error
+import stl.parsing.type as types
+from stl.obj.result import Eval_Result_Transformer
+from typing import Any
 
 
 class Int_Val(Primitive_Val):
-
     def __init__(self, value: str, value_type: types.Type = types.Int()):
-        # cast to Python integer type
-        self.value = int(value)
-        self.value_type = value_type
+        super().__init__(int(value), value_type)
 
     def __neg__(self):
         # unary minus for Int_Val
@@ -91,9 +92,7 @@ class Int_Val(Primitive_Val):
 
 class Float_Val(Primitive_Val):
     def __init__(self, value: str, value_type: types.Type = types.Float()):
-        # cast to Python float type
-        self.value = float(value)
-        self.value_type = value_type
+        super().__init(float(value), value_type)
 
     def __neg__(self):
         # unary minus for Float_Val
@@ -166,8 +165,7 @@ class Float_Val(Primitive_Val):
 
 class String_Val(Primitive_Val):
     def __init__(self, value: str, value_type: types.Type = types.String()):
-        self.value = value
-        self.value_type = value_type
+        super().__init__(value, value_type)
 
     def __neg__(self):
         # unary minus for Int_Val
@@ -187,8 +185,7 @@ class String_Val(Primitive_Val):
 
 class Boolean_Val(Primitive_Val):
     def __init__(self, value: str, value_type: types.Type = types.Boolean()):
-        self.value = tool.str_to_bool(value)  # convert boolean value to internal type
-        self.value_type = value_type
+        super().__init__(tool.str_to_bool(value), value_type)
 
     def to_str(self):
         return tool.bool_to_str(self.value)
@@ -230,32 +227,62 @@ class Id_Val(Val):
             and STL formula operator
     """
 
-    def __init__(self, var_id):
-        """take the identifier name of the variable"""
-        self.var_id = var_id
+    def __init__(self, value: str, value_type: types.Type = types.Unresolved()):
+        super().__init__(value, value_type)
+        self.cached_eval_result_val = None
+
+    # alias to value field
+    @property
+    def name(self):
+        if self.value_val:
+            return self.value
+        else:
+            raise error.AST_Error("name attribute does not exist")
+
+    @name.setter
+    def name(self, value: str):
+        self.value(value)
+
+    @property
+    def cached_eval_result(self):
+        if self.cached_eval_result:
+            return self.cached_eval_result_val
+        else:
+            raise error.AST_Error("cached_eval_result attribute does not exist")
+
+    @cached_eval_result.setter
+    def cached_eval_result(self, cached_eval_result: Val):
+        self.cached_eval_result_val = cached_eval_result
 
     def __str__(self):
         sb = String_Builder()
         sb.append("Id_Val: ( ")
-        sb.append(self.var_id)
+        sb.append(self.name)
         sb.append(" )")
 
         return str(sb)
-
-    def get_id(self):
-        return self.var_id
 
     def eval(self, eval_context):
         return eval_context.lookup(self)
 
     def type_check(self, type_context):
-        result = type_context.lookup(self)
-        # print(result)
-        # print(type(result))
-        return result
+        """
+        ensure the variable for all signal entries are homogenous
+        return the common type across all signal entries of the particular variable
+        """
+        # get the signal
+        # signal_var_type = type_context.lookup_signal(self)
+        # self.value_type(signal_var_type)
+        # return signal_var_type
+        # TODO: uncomment the type return expression
+        return types.Float
 
-    def to_py_obj(self):
-        pass
+    def to_py_obj(self) -> Any:
+        """return cache if available, otherwise, return None"""
+        if self.cached_eval_result:
+            return Eval_Result_Transformer(self.cached_eval_result).transform()
+        else:
+            return None
 
 
 class Meta_Id_Val(Val):

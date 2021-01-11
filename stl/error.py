@@ -11,4 +11,6 @@ from stl.err.context import Context_Error
 
 from stl.err.parsing import Parser_Error, Type_Error
 
+from stl.err.ast import AST_Error
+
 from stl.err.result import Result_Error

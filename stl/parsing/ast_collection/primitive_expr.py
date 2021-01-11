@@ -5,76 +5,7 @@ from stl.parsing.ast_collection.val import Boolean_Val
 from stl.tool import String_Builder
 import stl.error as error
 import stl.tool as tool
-
-
-####################
-# Unary Expression #
-####################
-
-class Unary_Expr(Primitive_Expr, ABC):
-    """super class for unary expressions"""
-
-    def __init__(self, op_str, op_type, rhs_expr):
-        # the string of the operator
-        self.op_str = op_str
-
-        # the type of the operator (PLUS)
-        self.op_type = op_type
-
-        # right hand expr
-        self.rhs_expr = rhs_expr
-
-    def __str__(self):
-        sb = String_Builder()
-        sb.append("Unary_Expr: ( ")
-        sb.append(str(self.op_str))
-        sb.append(" ")
-        sb.append(str(self.rhs_expr))
-        sb.append(" ) ")
-        return str(sb)
-
-
-class Unary_Logic_Expr(Unary_Expr):
-    def type_check(self, type_context):
-        return self.rhs_expr.type_check(type_context)
-
-    def eval(self, eval_context):
-        # evaluate both left and right side expressions
-        self.rhs_expr = self.rhs_expr.eval(eval_context)
-
-        result = None
-
-        if self.op_type == "LOGICAL_NOT":
-            result = self.rhs_expr.logical_not()
-        else:
-            raise exceptions.Operator_Not_Found_Error(
-                "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
-
-        return result
-
-
-class Unary_Arith_Expr(Unary_Expr):
-    """stores binary logic operation expressions AST"""
-
-    def type_check(self, type_context):
-        result = self.rhs_expr.type_check(type_context)
-        return result
-
-    def eval(self, eval_context):
-        # evaluate both left and right side expressions
-        self.rhs_expr = self.rhs_expr.eval(eval_context)
-
-        result = None
-
-        if self.op_type == "PLUS":
-            result = self.rhs_expr
-        elif self.op_type == "MINUS":
-            result = -self.rhs_expr
-        else:
-            raise exceptions.Operator_Not_Found_Error(
-                "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
-
-        return result
+import stl.parsing.type as types
 
 
 #####################
@@ -120,8 +51,14 @@ class Binary_Comp_Expr(Binary_Expr):
     def type_check(self, type_context):
         # lhs and rhs can be of "list" type or
         # type have to be consistent
+        lhs_expr_type = self.lhs_expr.type_check(type_context)
+        rhs_expr_type = self.rhs_expr.type_check(type_context)
 
-        pass
+        if lhs_expr_type != rhs_expr_type:
+            raise error.Type_Error("Type Mismatch for " + str(self))
+
+        else:
+            return types.Boolean()
 
     def eval(self, eval_context):
         # evaluate both left and right side expressions
@@ -278,3 +215,74 @@ class Binary_Arith_Expr(Binary_Expr):
 
         # the result is wrapped by primitive object
         return result
+
+
+####################
+# Unary Expression #
+####################
+
+class Unary_Expr(Binary_Expr, ABC):
+    """super class for unary expressions"""
+
+    def __init__(self, op_str, op_type, rhs_expr):
+        # the string of the operator
+        self.op_str = op_str
+
+        # the type of the operator (PLUS)
+        self.op_type = op_type
+
+        # right hand expr
+        self.rhs_expr = rhs_expr
+
+    def __str__(self):
+        sb = String_Builder()
+        sb.append("Unary_Expr: ( ")
+        sb.append(str(self.op_str))
+        sb.append(" ")
+        sb.append(str(self.rhs_expr))
+        sb.append(" ) ")
+        return str(sb)
+
+
+class Unary_Logic_Expr(Unary_Expr):
+    def type_check(self, type_context):
+        return self.rhs_expr.type_check(type_context)
+
+    def eval(self, eval_context):
+        # evaluate both left and right side expressions
+        self.rhs_expr = self.rhs_expr.eval(eval_context)
+
+        result = None
+
+        if self.op_type == "LOGICAL_NOT":
+            result = self.rhs_expr.logical_not()
+        else:
+            raise exceptions.Operator_Not_Found_Error(
+                "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
+
+        return result
+
+
+class Unary_Arith_Expr(Unary_Expr):
+    """stores binary logic operation expressions AST"""
+
+    def type_check(self, type_context):
+        result = self.rhs_expr.type_check(type_context)
+        return result
+
+    def eval(self, eval_context):
+        # evaluate both left and right side expressions
+        self.rhs_expr = self.rhs_expr.eval(eval_context)
+
+        result = None
+
+        if self.op_type == "PLUS":
+            result = self.rhs_expr
+        elif self.op_type == "MINUS":
+            result = -self.rhs_expr
+        else:
+            raise exceptions.Operator_Not_Found_Error(
+                "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
+
+        return result
+

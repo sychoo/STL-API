@@ -5,7 +5,7 @@ from abc import ABC, ABCMeta, abstractmethod
 from stl.tool import String_Builder
 import stl.parsing.type as types  # for low-level internally defined types
 import stl.error as error
-from typing import Optional
+from typing import Optional, Any
 
 
 class Node(metaclass=ABCMeta):  # metaclass=abc.ABCMeta support abstract method definition
@@ -110,10 +110,7 @@ class STL_Expr(Expr, ABC):
     #######################
     @property
     def operator(self):
-        if self.operator_val:
-            return self.operator_val
-        else:
-            raise error.Result_Error("operator attribute does not exist.")
+        return operator_val
 
     @operator.setter
     def operator(self, operator: str):
@@ -121,10 +118,7 @@ class STL_Expr(Expr, ABC):
 
     @property
     def begin_time(self):
-        if self.begin_time_val:
-            return self.begin_time_val
-        else:
-            raise error.Result_Error("begin_time attribute does not exist.")
+        return self.begin_time_val
 
     @begin_time.setter
     def begin_time(self, begin_time: Expr):
@@ -132,10 +126,7 @@ class STL_Expr(Expr, ABC):
 
     @property
     def end_time(self):
-        if self.end_time_val:
-            return self.end_time_val
-        else:
-            raise error.Result_Error("end_time attribute does not exist.")
+        return self.end_time_val
 
     @end_time.setter
     def end_time(self, end_time: Expr):
@@ -143,10 +134,7 @@ class STL_Expr(Expr, ABC):
 
     @property
     def begin_condition(self):
-        if self.begin_condition_val:
-            return self.begin_condition_val
-        else:
-            raise error.Result_Error("begin_condition attribute does not exist.")
+        return self.begin_condition_val
 
     @begin_condition.setter
     def begin_condition(self, begin_condition: Expr):
@@ -154,10 +142,7 @@ class STL_Expr(Expr, ABC):
 
     @property
     def end_condition(self):
-        if self.end_condition_val:
-            return self.end_condition_val
-        else:
-            raise error.Result_Error("begin_time attribute does not exist.")
+        return self.end_condition_val
 
     @end_condition.setter
     def end_condition(self, end_condition: Expr):
@@ -167,14 +152,39 @@ class STL_Expr(Expr, ABC):
 class Val(Expr, ABC, metaclass=ABCMeta):
     """super class for values, store primitive value types"""
 
-    def __init__(self, value, value_type):
-        self.value = value
-        self.value_type = value_type  # note that type is a reserved word
+    def __init__(self, value: Any, value_type: types.Type):
+        self.value_val = value
+        self.value_type_val = value_type  # note that type is a reserved word
 
     @abstractmethod
-    def to_py_obj(self) -> object:
+    def to_py_obj(self) -> Any:
         """convert internal representation of value in AST to Python object"""
         pass
+
+    #######################
+    # getters and setters #
+    #######################
+    @property
+    def value(self):
+        if self.value_val:
+            return self.value_val
+        else:
+            raise error.AST_Error("value attribute does not exist")
+
+    @value.setter
+    def value(self, value):
+        self.value_val = value
+
+    @property
+    def value_type(self):
+        if self.value_type_val:
+            return self.value_type_val
+        else:
+            raise error.AST_Error("value_type attribute does not exist")
+
+    @value_type.setter
+    def value_type(self, value_type):
+        self.value_type_val = value_type
 
     def __str__(self):
         sb = String_Builder()

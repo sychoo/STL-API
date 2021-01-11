@@ -24,37 +24,42 @@ class Type:
             return True
 
     def __str__(self):
-        return self.type_str + "_Type"
+        return self.type_str
 
 
 class Int(Type):
     def __init__(self):
-        super().__init__("INT")
+        super().__init__("Int")
 
 
 class Boolean(Type):
     def __init__(self):
-        super().__init__("BOOLEAN")
+        super().__init__("Boolean")
 
 
 class Float(Type):
     def __init__(self):
-        super().__init__("FLOAT")
+        super().__init__("Float")
 
 
 class String(Type):
     def __init__(self):
-        super().__init__("STRING")
+        super().__init__("String")
 
 
 class Signal(Type):
     def __init__(self):
-        super().__init__("SIGNAL")
+        super().__init__("Signal")
 
 
 class STL(Type):
     def __init__(self):
         super().__init__("STL")
+
+
+class Unresolved(Type):
+    def __init__(self):
+        super().__init__("Unresolved")
 
 
 class Type_Selector:

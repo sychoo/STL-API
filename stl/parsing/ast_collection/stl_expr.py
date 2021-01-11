@@ -8,6 +8,8 @@ import stl.parsing.type as types
 from typing import Optional
 from abc import ABC
 
+from stl.parsing.ast_collection.val import Id_Val
+from stl.obj.result import STL_Expr_Eval_Result
 
 class Unary_STL_Expr(STL_Expr, ABC):
     def __init__(self, operator: str, begin_time: Expr, end_time: Optional[Expr], condition: Expr):
@@ -68,9 +70,25 @@ class G_STL_Expr(Unary_STL_Expr, ABC):
     """support the globally STL expression"""
 
     def eval(self, eval_context):
-        # TODO: use getter/setter pattern when accessing parameters in STL_Expr
-        self.begin_time(self.begin_time.eval(eval_context))
-        self.end_time(self.end_time.eval(eval_context))
+        global_begin_time = eval_context.lookup(Id_Val("global_begin_time"))
+
+        stl_expr_begin_time = self.begin_time.eval(eval_context)
+        stl_expr_end_time = self.end_time.eval(eval_context)
+
+        # calculate local (actual) time for conditional expression signal slicing
+        local_begin_time = global_begin_time + stl_expr_begin_time
+        local_end_time = global_begin_time + stl_expr_end_time
+
+        # add local_begin_time and local_end_time to the context for accessing from conditional expression evaluation
+        eval_context.add(Id_Val("local_begin_time"), local_begin_time)
+        eval_context.add(Id_Val("local_end_time"), local_end_time)
+
+        # todo return STL_Expr_Eval_Result in the conditional expression evaluation
+        #return self.condition_expr.eval(eval_context)
+
+        # todo: unimport STL_Expr_Eval_Result
+        return STL_Expr_Eval_Result(true, 0.0)
+
 
     def eval2(self, eval_context):
         """add the pointer to the signal val to the context "$this$ -> signal_dict"""

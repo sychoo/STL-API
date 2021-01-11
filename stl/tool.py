@@ -11,6 +11,7 @@ import logging  # for logging error messages
 from signal import signal, SIGINT  # for gracefully start a new line when ctrl-C happens
 
 
+
 # ========= PRINT TOOLS (TO STDOUT) =========
 def print_error(error_msg: str, end: str = "\n") -> None:
     """print error message, this will prepend Error: to the string given in bolded red"""
@@ -28,6 +29,8 @@ def print_success(success_msg: str, end: str = "\n") -> None:
     """print warning message, this will print the given string in bolded yellow"""
     success_msg += end
     stdout.write(colored(success_msg, "green", attrs=["bold"]))
+
+
 # ========= /PRINT TOOLS (TO STDOUT) =========
 
 
@@ -49,8 +52,8 @@ def bool_to_str(bool):
         raise RuntimeError("boolean value \"" + bool + "\" is not recognized and cannot be converted to string.")
 
 
-def check_token_length(token_stream):  # # find the number of tokens
-    # find number of tokens
+def check_token_length(token_stream):
+    """find the number of tokens. note that the token stream pointer will not be reset"""
     token_num = token_length(token_stream)
 
     if token_num <= 0:
@@ -64,6 +67,8 @@ def token_length(token_stream):
         token_num += 1
 
     return token_num
+
+
 
 
 def repl(header: Optional[str] = None) -> str:

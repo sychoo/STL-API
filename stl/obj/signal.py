@@ -11,7 +11,8 @@ from collections import OrderedDict
 # JSON reference
 # json.loads(JSON str) -> dict (decode)
 # json.dumps(dict) -> JSON str (encode)
-
+import stl.error as error
+from stl.parsing.ast import Float_Val
 
 class Signal:
     """handles signal processing, conversion between JSON and Python dictionary
@@ -207,3 +208,18 @@ class Signal:
 
     def __len__(self) -> int:
         return len(self._signal_data)
+
+    @staticmethod
+    def signal_entry_to_ll_obj(val: str) -> Float_Val:
+        """convert the entry to the signal to low-level object for lexer and parser to floating point numbers
+
+        note that signal entries consists of Integers and Floating-point numbers represented in strings
+        """
+        try:
+            float(str)
+        except ValueError:
+            raise error.Signal_Error("Invalid Signal Entry. Unable to convert entry to float type")
+
+        return Float_Val(val)
+
+    # TODO: lookup signal
