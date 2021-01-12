@@ -8,14 +8,59 @@
 
 import stl.tool as tool
 from stl.tool import String_Builder
-from stl.parsing.ast_collection.core import Val, Primitive_Val
+from stl.parsing.ast_collection.core import Val
 import stl.parsing.type as types
 from stl.obj.result import Val_Eval_Result
 import stl.error as error
 import stl.parsing.type as types
 from stl.obj.result import Eval_Result_Transformer
 from typing import Any, Optional
+from abc import ABC
 
+
+class Primitive_Val(Val, ABC):
+    """super class for values, store primitive value types"""
+
+    def __eq__(self, rhs):
+        # this check is necessary because the program seems to pass None sometimes for rhs
+        if rhs is not None:
+
+            # greater or equal to
+            result = None
+
+            if self.value == rhs.value:
+                result = Boolean_Val("true")
+            else:
+                result = Boolean_Val("false")
+
+        else:
+            result = Boolean_Val("false")
+
+        return result
+
+    def __ne__(self, rhs):
+        # debug
+        # this check is necessary because the program seems to pass None sometimes for rhs
+        # print(str(rhs) + str(type(rhs)))
+        if rhs is not None:
+
+            # greater or equal to
+            result = None
+
+            if self.value != rhs.value:
+                result = Boolean_Val("true")
+            else:
+                result = Boolean_Val("false")
+
+        else:
+            # if rhs is None, return true since they are not equal
+            result = Boolean_Val("true")
+
+        return result
+
+    def to_py_obj(self) -> object:
+        # convert to python object
+        return self.value
 
 class Int_Val(Primitive_Val):
     def __init__(self, value: Optional[str] = None, value_type: types.Type = types.Int(), py_obj: Optional[int] = None):
@@ -169,6 +214,12 @@ class Float_Val(Primitive_Val):
 
         return result
 
+    @staticmethod
+    def min_of_list(float_val_list: list):  # accept list of Float_Val
+        py_obj_list = list()
+        for float_val in float_val_list:
+            py_obj_list.append(float_val.value)
+        return Float_Val(py_obj=min(py_obj_list))
 
 class String_Val(Primitive_Val):
     def __init__(self, value: str, value_type: types.Type = types.String(), py_obj: Optional[bool] = None):
@@ -194,7 +245,10 @@ class String_Val(Primitive_Val):
 
 
 class Boolean_Val(Primitive_Val):
-    def __init__(self, value: str, value_type: types.Type = types.Boolean(), py_obj: Optional[bool] = None):
+    def __init__(self, value: Optional[str] = None,
+                 value_type: types.Type = types.Boolean(),
+                 py_obj: Optional[bool] = None):
+
         if py_obj is not None:
             super().__init__(py_obj, value_type)
         else:
@@ -205,32 +259,49 @@ class Boolean_Val(Primitive_Val):
 
     def logical_and(self, rhs):
         # short-circuit evaluation
-        return Boolean_Val(tool.bool_to_str(self.value and rhs.value))
+        return Boolean_Val(py_obj=(self.value and rhs.value))
 
     def logical_or(self, rhs):
-        return Boolean_Val(tool.bool_to_str(self.value or rhs.value))
+        return Boolean_Val(py_obj=(self.value or rhs.value))
 
     def logical_implies(self, rhs):
-        return Boolean_Val(tool.bool_to_str((not self.value) or rhs.value))
+        return Boolean_Val(py_obj=((not self.value) or rhs.value))
 
     def logical_not(self):
-        return Boolean_Val(Tools.bool_to_str(not self.value))
+        return Boolean_Val(py_obj=(not self.value))
+
+    def logical_equals(self, rhs):
+        return Boolean_Val(py_obj=(self.value == rhs.value))
 
     @staticmethod
     def logical_and_list(boolean_val_list):
-        # set the result to true by default
-        result = Boolean_Val("true")
+        """support for G: Globally operator"""
+        result = Boolean_Val(py_obj=True)   # by default result is set to True
 
         # loop through the boolean value list and calculate the logical and value
         for boolean_val in boolean_val_list:
             result = boolean_val.logical_and(result)
 
             # short circuit for the multiple logical and connectives
-            if result == Boolean_Val("false"):
+            if result == Boolean_Val(py_obj=False):
                 return result
 
         return result
 
+    @staticmethod
+    def logical_or_list(boolean_val_list):
+        """super for F: Eventually operator"""
+        result = Boolean_Val(py_obj=True)  # by default result is set to True
+
+        # loop through the boolean value list and calculate the logical and value
+        for boolean_val in boolean_val_list:
+            result = boolean_val.logical_or(result)
+
+            # short circuit for the multiple logical and connectives
+            if result == Boolean_Val(py_obj=True):
+                return result
+
+        return result
 
 class Id_Val(Val):
     """stores identifier of the variable, variable expression
@@ -247,7 +318,7 @@ class Id_Val(Val):
     # alias to value field
     @property
     def name(self):
-        if self.value_val:
+        if self.value_val is not None:
             return self.value
         else:
             raise error.AST_Error("name attribute does not exist")
@@ -258,7 +329,7 @@ class Id_Val(Val):
 
     @property
     def cached_eval_result(self):
-        if self.cached_eval_result:
+        if self.cached_eval_result is not None:
             return self.cached_eval_result_val
         else:
             raise error.AST_Error("cached_eval_result attribute does not exist")
@@ -276,7 +347,11 @@ class Id_Val(Val):
         return str(sb)
 
     def eval(self, eval_context):
-        result: list = eval_context.lookup_signal(self)
+        """return a list of low-level values sliced by the local_begin_time and local_end_time"""
+        local_begin_time = eval_context.lookup(Id_Val("local_begin_time"))
+        local_end_time = eval_context.lookup(Id_Val("local_end_time"))
+
+        result: list = eval_context.lookup_signal(self, begin_time=local_begin_time, end_time=local_end_time)
         return result
 
     def type_check(self, type_context):
@@ -289,7 +364,7 @@ class Id_Val(Val):
         # self.value_type(signal_var_type)
         # return signal_var_type
         # TODO: uncomment the type return expression by default all signal entries returns float
-        return types.Float
+        return types.Float()
 
     def to_py_obj(self) -> Any:
         """return cache if available, otherwise, return None"""

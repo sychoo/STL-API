@@ -2,8 +2,8 @@
 # Sun Jan 10 21:10:06 EST 2021
 
 import stl.error as error
-from stl.parsing.ast_collection.val import Id_Val
-
+from stl.parsing.ast_collection.val import Id_Val, Int_Val
+from typing import Optional
 
 class Eval_Context:
     """store evaluation context, specifically dictionary containing identifier name
@@ -47,11 +47,11 @@ class Eval_Context:
         """get a list of variable identifiers (in string) in the current context"""
         return self.context.keys()
 
-    def lookup_signal(self, id_expr):
+    def lookup_signal(self, id_expr, begin_time: Optional[Int_Val] = None, end_time: Optional[Int_Val] = None):
         """look up the value for the corresponding identifier for the signal"""
         # get the signal data first
         signal = self.lookup(Id_Val("signal"))
-        result: list = signal.lookup(id_expr.name)
+        result: list = signal.lookup(id_expr.name, begin_time=begin_time.value, end_time=end_time.value, ll=True)
         return result
 
 

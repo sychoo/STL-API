@@ -13,7 +13,7 @@ import stl.obj.util as util
 # json.loads(JSON str) -> dict (decode)
 # json.dumps(dict) -> JSON str (encode)
 import stl.error as error
-
+from typing import Optional
 
 class Signal:
     """handles signal processing, conversion between JSON and Python dictionary
@@ -214,7 +214,7 @@ class Signal:
         return len(self._signal_data)
 
     # TODO: lookup signal by identifier's name
-    def lookup(self, id_name: str, ll: bool = False):
+    def lookup(self, id_name: str, ll: bool = False, begin_time: Optional[int] = None, end_time: Optional[int] = None):
         """ll flag: low-level flag, whether to convert the looked up python object to low-level (parser/lexer level)
         objects
 
@@ -229,7 +229,17 @@ class Signal:
         result = list()
         id_name_split: list[str] = id_name.split(".")
 
-        for i in range(len(self)):
+        # by default, begin and end range are the bound for the entire signal
+        begin_range = 0
+        end_range = len(self)
+
+        if begin_time is not None:
+            begin_range = begin_time
+
+        if end_time is not None:
+            end_range = end_time
+
+        for i in range(begin_range, end_range + 1):  # note that the end time will be included
             current_signal_content = self._signal_data[str(i)]["content"]
 
             for key in id_name_split:

@@ -31,7 +31,7 @@ class Lexer:
         lg.add("EVENTUALLY", r"\<\>")
 
         # logical operators
-        lg.add("LOGICAL_EQ", r"\<\=\>")
+        lg.add("LOGICAL_EQUALS", r"\<\=\>")
         lg.add("LOGICAL_AND", r"\&\&")
         lg.add("LOGICAL_OR", r"\|\|")
         lg.add("LOGICAL_IMPLIES", r"\=\>")

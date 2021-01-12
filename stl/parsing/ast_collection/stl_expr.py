@@ -4,6 +4,8 @@ from stl.tool import String_Builder
 import stl.error as error
 
 from stl.parsing.ast_collection.core import Expr, STL_Expr
+from stl.parsing.ast_collection.val import Boolean_Val, Float_Val
+
 import stl.parsing.type as types
 from typing import Optional
 from abc import ABC
@@ -81,65 +83,15 @@ class G_STL_Expr(Unary_STL_Expr, ABC):
         eval_context.add(Id_Val("local_end_time"), local_end_time)
 
         # todo return STL_Expr_Eval_Result in the conditional expression evaluation
-        # return self.condition_expr.eval(eval_context)
-        # todo: return Binary_Comp_Expr evaluation
-        #print(STL_Expr_Eval_Result(True, 0.0))
+        # TODO: condition_expr will return a list of truth values (types.Boolean) and a list of robustness values (types.Int) between the local_begin_time and the local_end_time
+        satisfy_list, robustness_list = self.begin_condition.eval(eval_context)
+        result_satisfy = Boolean_Val.logical_and_list(satisfy_list).value
+        result_robustness = Float_Val.min_of_list(robustness_list).value
+
 
         # todo: unimport STL_Expr_Eval_Result
-        return STL_Expr_Eval_Result(True, 0.0)
+        return STL_Expr_Eval_Result(satisfy=result_satisfy, robustness=result_robustness)
 
-
-    def eval2(self, eval_context):
-        """add the pointer to the signal val to the context "$this$ -> signal_dict"""
-
-        # debug
-        # print(eval_context)
-
-        # op, begin_expr, end_expr, condition_expr, time, signal):
-        # evaluate the begin and the end time and time (time start for the signal)
-        self.begin_expr = self.begin_expr.eval(eval_context)
-        self.end_expr = self.end_expr.eval(eval_context)
-
-        # print("signal val type: " + str(type(self.signal_val)))
-
-        # cheat
-        # convert both time to Python Int object
-        self.begin_expr_int = self.begin_expr.to_py_obj()
-        self.end_expr_int = self.end_expr.to_py_obj()
-
-        # only keep the signal value between certain time interval
-        # $this -> slided Signal val
-        # add $this meta variable to the context that refer to the signal that is currently begin evaluated
-        # sliced signal will be offset by self.time_expr
-        offset_begin_expr_int = self.begin_expr_int + self.time_expr_int
-        offset_end_expr_int = self.end_expr_int + self.time_expr_int
-
-        # print("slice begin: " + str(offset_begin_expr_int))
-        # print("slide end: " + str(offset_end_expr_int))
-        eval_context.add(Meta_Id_Val("$this"),
-                         self.signal_val.slice_signal_by_time_interval(offset_begin_expr_int, offset_end_expr_int))
-
-        # print(eval_context)
-        # for time in range(self.begin_expr_int + self.time_expr_int, self.end_expr_int + 1 + self.time_expr_int):
-        # eval_context.add(Meta_Id_Val("$" + str(time) + ".content"), self.signal_val.get_signal_dict()[str(time)])
-
-        # TODO: add values in the signal (self.signal) to the evaluation_context
-        # loop through time_begin to time_end (int)
-
-        # add to_py_obj(self) to primitive values and signal value (dictionary)
-        # i.e. [2, 3] evaluate $2.param and $3.param
-
-        # $1.param -> 7
-        # $2.param -> 10
-        # $3.param -> 15
-        # Lexer: META_IDENTIFIER = $ IDENTIFIER
-        # META_IDENTIFIER.eval(context, signal)
-        # eval function will evaluate all META_IDENTIFIERS associated with the param
-
-        # implicitly evaluate the meta variables
-        self.condition_expr = self.condition_expr.eval(eval_context)
-
-        return self.condition_expr
 
 
 class F_STL_Expr(Unary_STL_Expr, ABC):

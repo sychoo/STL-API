@@ -111,7 +111,7 @@ class STL_Expr_Eval_Result(Eval_Result, ABC):
 
         # ensure satisfaction matches the robustness
         if (satisfy and robustness < 0) or (not satisfy and robustness > 0):
-            raise error.Result_Error("satisfaction value does not match the robustness value")
+            raise error.Result_Error("satisfaction value does not match the robustness value! satisfaction value = " + str(satisfy) + ", robustness value = " + str(robustness))
 
         # probability must be between 0 and 1
         if probability:
@@ -126,10 +126,11 @@ class STL_Expr_Eval_Result(Eval_Result, ABC):
         sb.append(str(self.satisfy_val))
         sb.append("\n")
 
-        sb.append("robustness  : ")
-        sb.append(str(self.robustness_val))
+        if self.robustness is not None:
+            sb.append("robustness  : ")
+            sb.append(str(self.robustness_val))
 
-        if self.probability:
+        if self.probability is not None:
             sb.append("\n")
             sb.append("probability : ")
             sb.append(str(self.probability_val))

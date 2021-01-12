@@ -27,7 +27,7 @@ class Parser:
             "EVENTUALLY",
 
             # logical operators
-            "LOGICAL_EQ",
+            "LOGICAL_EQUALS",
             "LOGICAL_AND",
             "LOGICAL_OR",
             "LOGICAL_IMPLIES",
@@ -85,7 +85,7 @@ class Parser:
                 ('left', ['LOGICAL_AND']),
                 ('left', ['LOGICAL_OR']),
                 ('left', ['LOGICAL_IMPLIES']),
-                ('left', ['LOGICAL_EQ']),
+                ('left', ['LOGICAL_EQUALS']),
                 ('right', ['EQUAL']),
             ])
 
@@ -120,7 +120,7 @@ class Parser:
         @pg.production("expr : expr LOGICAL_AND expr")
         @pg.production("expr : expr LOGICAL_OR expr")
         @pg.production("expr : expr LOGICAL_IMPLIES expr")
-        @pg.production("expr : expr LOGICAL_EQ expr")
+        @pg.production("expr : expr LOGICAL_EQUALS expr")
         def binary_logic_expr(s):
             """binary logical expressions"""
             return AST.Binary_Logic_Expr(s[1].getstr(), s[1].gettokentype(), s[0], s[2])
