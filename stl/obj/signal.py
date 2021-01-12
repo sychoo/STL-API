@@ -7,12 +7,13 @@ import stl.error as err
 
 from typing import Any
 from collections import OrderedDict
+import stl.obj.util as util
 
 # JSON reference
 # json.loads(JSON str) -> dict (decode)
 # json.dumps(dict) -> JSON str (encode)
 import stl.error as error
-from stl.parsing.ast import Float_Val
+
 
 class Signal:
     """handles signal processing, conversion between JSON and Python dictionary
@@ -28,10 +29,12 @@ class Signal:
         >>> sig = Signal() # empty signal
         >>> sig_from_json = Signal(json_str = '{"0": {"content": {"x": 0, "y": 0}}}')
         >>> sig_from_dict = Signal(py_dict = {"0": {"content": {"x": 0, "y": 0}}})
-
+        >>> sig_from_dict_nested = Signal(py_dict = {"0": {"content": {"x": 0, "y": {"z": 0}}}, "1": {"content": {"x": 0, "y": {"z": 2}}}})
+        >>> sig_from_dict_nested.lookup("y.z")
+        [0, 2]
         append new elements to signal
-        >>> sig.add(json_str = '{"x": 7, "y": 7}')
-        >>> sig.add(py_dict = {"x": 7, "y": 7})
+        >>> sig.append(json_str = '{"x": 7, "y": 7}')
+        >>> sig.append(py_dict = {"x": 7, "y": 7})
     """
 
     def __init__(self, json_str: str = "", py_dict: dict[str, Any] = dict()) -> None:
@@ -51,16 +54,17 @@ class Signal:
 
         # case when both parameters are not given
         if not json_str and not py_dict:
-            
+
             # initialize empty data
             self._signal_data: dict = dict()
 
             # set the next index to be inserted (initialize to 0)
             self._next_index: int = 0
-        
+
         # user supplied both JSON and Python dictionary data
         elif json_str and py_dict:
-            raise err.Signal_Error("Cannot supply both JSON and Python dictionary data in the signal constructor. Please try again.")
+            raise err.Signal_Error(
+                "Cannot supply both JSON and Python dictionary data in the signal constructor. Please try again.")
 
         # one of the data is given
         else:
@@ -68,7 +72,7 @@ class Signal:
             # convert the json_str to py_dict
             if json_str and not py_dict:
                 py_dict = json.loads(json_str)
-            
+
             # add py_dict to signal
             # verify the dictionary
             is_verified, msg = Signal.static_verify_signal(py_dict)
@@ -80,14 +84,12 @@ class Signal:
 
             self._next_index = len(self._signal_data)
 
-    
     def is_empty(self) -> bool:
         return len(self._signal_data) == 0
 
     def print_json(self) -> None:
         """print the json string"""
         print(self._get_json_str())
-    
 
     def append(self, json_str=None, py_dict=None) -> None:
         """append an element to the signal"""
@@ -118,7 +120,7 @@ class Signal:
     @property
     def signal_data(self) -> dict[str, Any]:
         return self._signal_data
-    
+
     @signal_data.setter
     def signal_data(self, signal_data) -> None:
         self._signal_data = signal_data
@@ -145,6 +147,7 @@ class Signal:
         # return json.dumps(self._signal_data, sort_keys=True, indent=4)
 
         return json.dumps(ordered_signal_data, indent=4)
+
     # =========== /getter, setter, and deleter ==========
 
     def verify_signal(self) -> tuple[bool, str]:
@@ -162,7 +165,7 @@ class Signal:
         # ensure signal data (python dictionary) keys have continous indices
 
         # generated expected dictionary keys (with stringified keys)
-        expected_dict_keys = [ str(i) for i in range(start_index, signal_length) ]
+        expected_dict_keys = [str(i) for i in range(start_index, signal_length)]
 
         # compare with listified signal_data
         if expected_dict_keys != list(signal_data.keys()):
@@ -182,7 +185,7 @@ class Signal:
         if len(signal_data) == 0:
             # return empty list if self._signal_data is empty
             return list()
-        
+
         elif len(signal_data) > 1:
             # assume signal index start with 0
             # note that set() extract a set of dictionary keys
@@ -190,14 +193,15 @@ class Signal:
 
             # get the intersection of all signal elements keys
             for signal_index in signal_data.keys():
-                signal_content_common_key_set = signal_content_common_key_set.intersection(set(signal_data[signal_index]["content"]))
+                signal_content_common_key_set = signal_content_common_key_set.intersection(
+                    set(signal_data[signal_index]["content"]))
 
             return list(signal_content_common_key_set)
 
         else:
             # when there is only 1 element in the signal_data, return its keys
             return signal_data["0"]["content"].keys()
-    
+
     def __repr__(self) -> str:
         """representation of object, easy to debug on Python REPL"""
         return str(self)
@@ -209,17 +213,31 @@ class Signal:
     def __len__(self) -> int:
         return len(self._signal_data)
 
-    @staticmethod
-    def signal_entry_to_ll_obj(val: str) -> Float_Val:
-        """convert the entry to the signal to low-level object for lexer and parser to floating point numbers
+    # TODO: lookup signal by identifier's name
+    def lookup(self, id_name: str, ll: bool = False):
+        """ll flag: low-level flag, whether to convert the looked up python object to low-level (parser/lexer level)
+        objects
 
-        note that signal entries consists of Integers and Floating-point numbers represented in strings
+        Usage:
+            >>> from stl.api import Signal
+            >>> sig = Signal(py_dict = {"0": {"content": {"x": 0, "y": {"z": 0}}}, "1": {"content": {"x": 0, "y": {"z": 2}}}})
+            >>> sig.lookup("y.z")
+            [0, 2]
+            >>> sig.lookup("y.z", ll=True)
+            [<stl.parsing.ast_collection.val.Float_Val object at 0x108493d00>, <stl.parsing.ast_collection.val.Float_Val object at 0x108493cd0>]
         """
-        try:
-            float(str)
-        except ValueError:
-            raise error.Signal_Error("Invalid Signal Entry. Unable to convert entry to float type")
+        result = list()
+        id_name_split: list[str] = id_name.split(".")
 
-        return Float_Val(val)
+        for i in range(len(self)):
+            current_signal_content = self._signal_data[str(i)]["content"]
 
-    # TODO: lookup signal
+            for key in id_name_split:
+                current_signal_content = current_signal_content[key]
+
+            if ll:
+                result.append(util.py_obj_to_ll_obj(current_signal_content, int_to_float=True))
+            else:
+                result.append(current_signal_content)
+
+        return result

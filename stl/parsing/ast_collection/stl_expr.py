@@ -11,6 +11,7 @@ from abc import ABC
 from stl.parsing.ast_collection.val import Id_Val
 from stl.obj.result import STL_Expr_Eval_Result
 
+
 class Unary_STL_Expr(STL_Expr, ABC):
     def __init__(self, operator: str, begin_time: Expr, end_time: Optional[Expr], condition: Expr):
         """end_time is optional for (X: next) operator"""
@@ -22,15 +23,15 @@ class Unary_STL_Expr(STL_Expr, ABC):
         sb.append("Unary_STL_Expr: ( ")
         sb.append(self.operator)
         sb.append(" [")
-        sb.append(str(self.begin_expr))
+        sb.append(str(self.begin_time))
 
         # exception for X: next operator
-        if self.end_expr:
+        if self.end_time:
             sb.append(", ")
-            sb.append(str(self.end_expr))
+            sb.append(str(self.end_time))
 
         sb.append("] (")
-        sb.append(str(self.condition_expr))
+        sb.append(str(self.begin_condition))
         sb.append(")")
 
         return str(sb)
@@ -48,20 +49,16 @@ class Binary_STL_Expr(STL_Expr, ABC):
         sb = String_Builder()
         sb.append("Binary_STL_Expr: ( ")
         sb.append("(")
-        sb.append(str(self.begin_condition_expr))
+        sb.append(str(self.begin_condition))
         sb.append(") ")
         sb.append(self.op)
         sb.append(" [")
-        sb.append(str(self.begin_expr))
+        sb.append(str(self.begin_time))
         sb.append(", ")
-        sb.append(str(self.end_expr))
+        sb.append(str(self.end_time))
         sb.append("] (")
-        sb.append(str(self.end_condition_expr))
-        sb.append(") (")
-        sb.append(str(self.time_expr))
-        sb.append(", ")
-        sb.append(str(self.signal_val))
-        sb.append(") )")
+        sb.append(str(self.end_condition))
+        sb.append(")")
 
         return str(sb)
 
@@ -84,10 +81,12 @@ class G_STL_Expr(Unary_STL_Expr, ABC):
         eval_context.add(Id_Val("local_end_time"), local_end_time)
 
         # todo return STL_Expr_Eval_Result in the conditional expression evaluation
-        #return self.condition_expr.eval(eval_context)
+        # return self.condition_expr.eval(eval_context)
+        # todo: return Binary_Comp_Expr evaluation
+        #print(STL_Expr_Eval_Result(True, 0.0))
 
         # todo: unimport STL_Expr_Eval_Result
-        return STL_Expr_Eval_Result(true, 0.0)
+        return STL_Expr_Eval_Result(True, 0.0)
 
 
     def eval2(self, eval_context):

@@ -110,7 +110,7 @@ class STL_Expr(Expr, ABC):
     #######################
     @property
     def operator(self):
-        return operator_val
+        return self.operator_val
 
     @operator.setter
     def operator(self, operator: str):
@@ -166,7 +166,7 @@ class Val(Expr, ABC, metaclass=ABCMeta):
     #######################
     @property
     def value(self):
-        if self.value_val:
+        if self.value_val is not None:
             return self.value_val
         else:
             raise error.AST_Error("value attribute does not exist")
@@ -177,7 +177,7 @@ class Val(Expr, ABC, metaclass=ABCMeta):
 
     @property
     def value_type(self):
-        if self.value_type_val:
+        if self.value_type_val is not None:
             return self.value_type_val
         else:
             raise error.AST_Error("value_type attribute does not exist")

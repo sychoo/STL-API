@@ -46,7 +46,7 @@ class Interpreter:
 
         # initialize the evaluation context, evaluate the AST
         eval_ctx = ctx.Eval_Context.get_empty_context()
-        eval_ctx.add(ast.Id_Val("global_begin_time"), Int_Val(str(self.global_begin_time)))
+        eval_ctx.add(ast.Id_Val("global_begin_time"), Int_Val(py_obj=self.global_begin_time))
         eval_ctx.add(ast.Id_Val("signal"), self.signal)
 
         low_level_eval_result = parsed_expr.eval(eval_ctx)

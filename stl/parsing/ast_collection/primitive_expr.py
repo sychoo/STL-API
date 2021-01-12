@@ -126,7 +126,7 @@ class Binary_Comp_Expr(Binary_Expr):
             elif self.op_type == "NOT_EQUAL":
                 result = self.lhs_expr != self.rhs_expr
             else:
-                raise exceptions.Operator_Not_Found_Error(
+                raise error.AST_Error(
                     "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
 
         return result
@@ -160,7 +160,7 @@ class Binary_Logic_Expr(Binary_Expr):
             result = self.lhs_expr.logical_implies(self.rhs_expr)
 
         else:
-            raise exceptions.Operator_Not_Found_Error(
+            raise error.AST_Error(
                 "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
 
         return result
@@ -210,7 +210,7 @@ class Binary_Arith_Expr(Binary_Expr):
         elif self.op_type == "DIVIDE":
             result = self.lhs_expr / self.rhs_expr
         else:
-            raise exceptions.Operator_Not_Found_Error(
+            raise error.AST_Error(
                 "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
 
         # the result is wrapped by primitive object
@@ -257,7 +257,7 @@ class Unary_Logic_Expr(Unary_Expr):
         if self.op_type == "LOGICAL_NOT":
             result = self.rhs_expr.logical_not()
         else:
-            raise exceptions.Operator_Not_Found_Error(
+            raise error.AST_Error(
                 "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
 
         return result
@@ -281,7 +281,7 @@ class Unary_Arith_Expr(Unary_Expr):
         elif self.op_type == "MINUS":
             result = -self.rhs_expr
         else:
-            raise exceptions.Operator_Not_Found_Error(
+            raise error.AST_Error(
                 "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
 
         return result

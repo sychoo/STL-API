@@ -2,6 +2,7 @@
 # Sun Jan 10 21:10:06 EST 2021
 
 import stl.error as error
+from stl.parsing.ast_collection.val import Id_Val
 
 
 class Eval_Context:
@@ -45,6 +46,13 @@ class Eval_Context:
     def get_current_context_id_names(self):
         """get a list of variable identifiers (in string) in the current context"""
         return self.context.keys()
+
+    def lookup_signal(self, id_expr):
+        """look up the value for the corresponding identifier for the signal"""
+        # get the signal data first
+        signal = self.lookup(Id_Val("signal"))
+        result: list = signal.lookup(id_expr.name)
+        return result
 
 
 class Type_Context:

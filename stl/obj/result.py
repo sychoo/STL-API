@@ -5,7 +5,7 @@ from typing import Optional, Union
 import stl.error as error
 from abc import ABCMeta, abstractmethod, ABC
 from stl.tool import String_Builder
-from stl.parsing.ast import Val
+from stl.parsing.ast_collection.core import Val
 
 from typing import Any, Optional, Union
 
@@ -38,10 +38,8 @@ class Eval_Result(metaclass=ABCMeta):
 
     @property
     def value(self):
-        if self.value_val:
+        if self.value_val is not None:
             return self.value_val
-        else:
-            raise error.Result_Error("value attribute does not exist.")
 
     @value.setter
     def value(self, value: Any):
@@ -49,10 +47,8 @@ class Eval_Result(metaclass=ABCMeta):
 
     @property
     def satisfy(self):
-        if self.satisfy_val:
+        if self.satisfy_val is not None:
             return self.satisfy_val
-        else:
-            raise error.Result_Error("satisfy attribute does not exist.")
 
     @satisfy.setter
     def satisfy(self, satisfy: bool):
@@ -60,10 +56,8 @@ class Eval_Result(metaclass=ABCMeta):
 
     @property
     def robustness(self):
-        if self.robustness_val:
+        if self.robustness_val is not None:
             return self.robustness_val
-        else:
-            raise error.Result_Error("robustness attribute does not exist.")
 
     @robustness.setter
     def robustness(self, robustness: Union[float, int]):
@@ -71,10 +65,8 @@ class Eval_Result(metaclass=ABCMeta):
 
     @property
     def probability(self):
-        if self.probability_val:
+        if self.probability_val is not None:
             return self.probability_val
-        else:
-            raise error.Result_Error("probability attribute does not exist.")
 
     @probability.setter
     def probability(self, probability: Union[float, int]):
@@ -136,9 +128,9 @@ class STL_Expr_Eval_Result(Eval_Result, ABC):
 
         sb.append("robustness  : ")
         sb.append(str(self.robustness_val))
-        sb.append("\n")
 
         if self.probability:
+            sb.append("\n")
             sb.append("probability : ")
             sb.append(str(self.probability_val))
         return str(sb)
@@ -169,7 +161,10 @@ class Eval_Result_Transformer:
         if isinstance(self.eval_result, Val):
             return Val_Eval_Result(self.eval_result)
         elif isinstance(self.eval_result, Eval_Result):
-            pass
+            return self.eval_result
+        # list is not an internal type. bypass, simply print out the list
+        elif isinstance(self.eval_result, list):
+            return self.eval_result
         else:
             raise error.Result_Error("Unsupported transformation of evaluation result of Type " +
                                      self.eval_result.__class__.__name__)

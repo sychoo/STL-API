@@ -14,12 +14,15 @@ from stl.obj.result import Val_Eval_Result
 import stl.error as error
 import stl.parsing.type as types
 from stl.obj.result import Eval_Result_Transformer
-from typing import Any
+from typing import Any, Optional
 
 
 class Int_Val(Primitive_Val):
-    def __init__(self, value: str, value_type: types.Type = types.Int()):
-        super().__init__(int(value), value_type)
+    def __init__(self, value: Optional[str] = None, value_type: types.Type = types.Int(), py_obj: Optional[int] = None):
+        if py_obj is not None:
+            super().__init__(py_obj, value_type)
+        else:
+            super().__init__(int(value), value_type)
 
     def __neg__(self):
         # unary minus for Int_Val
@@ -91,8 +94,12 @@ class Int_Val(Primitive_Val):
 
 
 class Float_Val(Primitive_Val):
-    def __init__(self, value: str, value_type: types.Type = types.Float()):
-        super().__init(float(value), value_type)
+    def __init__(self, value: Optional[str] = None, value_type: types.Type = types.Float(),
+                 py_obj: Optional[float] = None):
+        if py_obj is not None:
+            super().__init__(py_obj, value_type)
+        else:
+            super().__init__(float(value), value_type)
 
     def __neg__(self):
         # unary minus for Float_Val
@@ -164,8 +171,11 @@ class Float_Val(Primitive_Val):
 
 
 class String_Val(Primitive_Val):
-    def __init__(self, value: str, value_type: types.Type = types.String()):
-        super().__init__(value, value_type)
+    def __init__(self, value: str, value_type: types.Type = types.String(), py_obj: Optional[bool] = None):
+        if py_obj is not None:
+            super().__init__(py_obj, value_type)
+        else:
+            super().__init__(value, value_type)
 
     def __neg__(self):
         # unary minus for Int_Val
@@ -184,8 +194,11 @@ class String_Val(Primitive_Val):
 
 
 class Boolean_Val(Primitive_Val):
-    def __init__(self, value: str, value_type: types.Type = types.Boolean()):
-        super().__init__(tool.str_to_bool(value), value_type)
+    def __init__(self, value: str, value_type: types.Type = types.Boolean(), py_obj: Optional[bool] = None):
+        if py_obj is not None:
+            super().__init__(py_obj, value_type)
+        else:
+            super().__init__(tool.str_to_bool(value), value_type)
 
     def to_str(self):
         return tool.bool_to_str(self.value)
@@ -263,7 +276,8 @@ class Id_Val(Val):
         return str(sb)
 
     def eval(self, eval_context):
-        return eval_context.lookup(self)
+        result: list = eval_context.lookup_signal(self)
+        return result
 
     def type_check(self, type_context):
         """
@@ -274,7 +288,7 @@ class Id_Val(Val):
         # signal_var_type = type_context.lookup_signal(self)
         # self.value_type(signal_var_type)
         # return signal_var_type
-        # TODO: uncomment the type return expression
+        # TODO: uncomment the type return expression by default all signal entries returns float
         return types.Float
 
     def to_py_obj(self) -> Any:

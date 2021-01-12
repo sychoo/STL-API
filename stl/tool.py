@@ -124,3 +124,4 @@ class String_Builder:
 
     def __str__(self):
         return self.string.getvalue()
+
