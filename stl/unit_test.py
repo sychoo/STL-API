@@ -13,8 +13,12 @@ stl_path = os.getenv("STLPATH")
 class Test_Example_Files(unittest.TestCase):
 
     def test_signal(self):
-        import stl.example.obj.signal.main
+        import stl.example.api.signal.main
         tool.print_success("SIGNAL TEST PASSED")
+
+    def test_stl(self):
+        import stl.example.api.stl.main
+        tool.print_success("STL TEST PASSED")
 
     def test_lexer(self):
         subprocess.call(stl_path + "/stl/example/parsing/lex.sh")

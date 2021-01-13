@@ -14,3 +14,5 @@ from stl.err.parsing import Parser_Error, Type_Error
 from stl.err.ast import AST_Error
 
 from stl.err.result import Result_Error
+
+from stl.err.stl import STL_Error

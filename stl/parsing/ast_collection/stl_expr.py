@@ -7,7 +7,7 @@ from stl.parsing.ast_collection.core import Expr
 from stl.parsing.ast_collection.val import Boolean_Val, Float_Val
 
 import stl.parsing.type as types
-from typing import Optional
+from typing import Optional, Union
 from abc import ABC
 
 from stl.parsing.ast_collection.val import Id_Val, Int_Val
@@ -191,11 +191,19 @@ class G_STL_Expr(Unary_STL_Expr, ABC):
     def eval(self, eval_context):
         super().eval(eval_context)
 
-        satisfy_list, robustness_list = self.begin_condition.eval(eval_context)
-        result_satisfy = Boolean_Val.logical_and_list(satisfy_list).value
-        result_robustness = Float_Val.min_of_list(robustness_list).value
+        # return type Tuple[Union[Boolean_Val, list[Boolean_Val]], Union[Float_Val, list[Float_Val]]]
+        satisfy, robustness = self.begin_condition.eval(eval_context)
+        result = None
 
-        return STL_Expr_Eval_Result(satisfy=result_satisfy, robustness=result_robustness)
+        if isinstance(satisfy, list) and isinstance(robustness, list):
+            result_satisfy = Boolean_Val.logical_and_list(satisfy).value
+            result_robustness = Float_Val.min_of_list(robustness).value
+            result = STL_Expr_Eval_Result(satisfy=result_satisfy, robustness=result_robustness)
+
+        elif isinstance(satisfy, Boolean_Val) and isinstance(robustness, Float_Val):
+            result = STL_Expr_Eval_Result(satisfy=satisfy.value, robustness=robustness.value)
+
+        return result
 
 
 # TODO: what's robustness with respect to F?
@@ -205,11 +213,19 @@ class F_STL_Expr(Unary_STL_Expr, ABC):
     def eval(self, eval_context):
         super().eval(eval_context)
 
-        satisfy_list, robustness_list = self.begin_condition.eval(eval_context)
-        result_satisfy = Boolean_Val.logical_or_list(satisfy_list).value
-        # result_robustness = Float_Val.min_of_list(robustness_list).value
+        # return type Tuple[Union[Boolean_Val, list[Boolean_Val]], Union[Float_Val, list[Float_Val]]]
+        satisfy, robustness = self.begin_condition.eval(eval_context)
+        result = None
 
-        return STL_Expr_Eval_Result(satisfy=result_satisfy) #,robustness=result_robustness)
+        if isinstance(satisfy, list) and isinstance(robustness, list):
+            result_satisfy = Boolean_Val.logical_or_list(satisfy).value
+            # result_robustness = Float_Val.min_of_list(robustness).value
+            result = STL_Expr_Eval_Result(satisfy=result_satisfy)  #, robustness=result_robustness)
+
+        elif isinstance(satisfy, Boolean_Val) and isinstance(robustness, Float_Val):
+            result = STL_Expr_Eval_Result(satisfy=satisfy.value)  #, robustness=robustness.value)
+
+        return result
 
 
 class X_STL_Expr(Unary_STL_Expr, ABC):

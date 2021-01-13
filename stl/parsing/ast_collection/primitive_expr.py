@@ -7,7 +7,7 @@ import stl.error as error
 import stl.tool as tool
 import stl.parsing.type as types
 from stl.obj.result import STL_Expr_Eval_Result
-from typing import Union
+from typing import Union, Tuple
 
 
 #####################
@@ -105,7 +105,7 @@ class Binary_Comp_Expr(Binary_Expr):
 
         return result
 
-    def eval(self, eval_context) -> (Union[Boolean_Val, list[Boolean_Val]], Union[Float_Val, list[Float_Val]]):
+    def eval(self, eval_context) -> Tuple[Union[Boolean_Val, list[Boolean_Val]], Union[Float_Val, list[Float_Val]]]:
         """
         when evaluating atomic lhs/rhs expressions, return (Boolean_Val, Float_Val)
         when evaluating expression lists (multiple values extracted from signal, return (list[Boolean_Val], list[Float_Val])
@@ -120,7 +120,6 @@ class Binary_Comp_Expr(Binary_Expr):
         # rhs = Val
         if (isinstance(lhs, list)) and (not isinstance(rhs, list)):
             for lhs_expr in lhs:
-                # print("evaluating " + str(lhs_expr) + str(type(lhs_expr)) + str(type(lhs)))
                 satisfy_val, robustness_val = Binary_Comp_Expr(
                     self.operator, self.operator_type, lhs_expr, rhs
                 ).eval(eval_context)
@@ -142,8 +141,6 @@ class Binary_Comp_Expr(Binary_Expr):
         # lhs = [...]
         # rhs = [...]
         elif (isinstance(lhs, list)) and (isinstance(rhs, list)):
-            # evaluated boolean value list
-            evaluated_boolean_val_list = list()
 
             # case when lhs is a list, but not the rhs
             lhs_list_len = len(lhs)

@@ -6,6 +6,8 @@ from stl.parsing.parser import Parser
 from stl.obj.signal import Signal
 from stl.parsing.interpreter import Interpreter
 from stl.obj.result import Eval_Result
+from typing import Optional
+import stl.error as error
 
 
 class STL:
@@ -28,19 +30,44 @@ class STL:
 
     def __init__(self, value: str):
         self.value_val = value  # do not evaluate when user has not passed in the time_begin and signal
+        self.eval_result_cache_val = None
 
     def eval(self, time_begin: int, signal: Signal) -> Eval_Result:
         interpreter = Interpreter(time_begin, signal, self.lexer, self.parser)
         return interpreter.interpret(self.value)
 
-    def satisfy(self, time_begin, signal: Signal):
-        pass
+    def satisfy(self, time_begin: Optional[int] = None, signal: Optional[Signal] = None) -> bool:
+        if self.eval_result_cache is not None:
+            return self.eval_result_cache.satisfy
+        else:
+            if time_begin is not None and signal is not None:
+                return self.eval(time_begin, signal).satisfy
+            else:
+                raise error.STL_Error(
+                    "No Cached Evaluation Result Available." +
+                    "Please Supply time_begin and signal parameter for evaluations")
 
-    def robustness(self, time_begin, signal: Signal):
-        pass
+    def robustness(self, time_begin: Optional[int] = None, signal: Optional[Signal] = None) -> float:
+        if self.eval_result_cache is not None:
+            return self.eval_result_cache.robustness
+        else:
+            if time_begin is not None and signal is not None:
+                return self.eval(time_begin, signal).robustness
+            else:
+                raise error.STL_Error(
+                    "No Cached Evaluation Result Available." +
+                    "Please Supply time_begin and signal parameter for evaluations")
 
-    def probability(self, time_begin, signal: Signal):
-        pass
+    def probability(self, time_begin: Optional[int] = None, signal: Optional[Signal] = None):
+        if self.eval_result_cache is not None:
+            return self.eval_result_cache.probability
+        else:
+            if time_begin is not None and signal is not None:
+                return self.eval(time_begin, signal).probability
+            else:
+                raise error.STL_Error(
+                    "No Cached Evaluation Result Available." +
+                    "Please Supply time_begin and signal parameter for evaluations")
 
     @property
     def value(self):
@@ -49,3 +76,11 @@ class STL:
     @value.setter
     def value(self, value: str):
         self.value_val = value
+
+    @property
+    def eval_result_cache(self):
+        return self.eval_result_cache_val
+
+    @eval_result_cache.setter
+    def eval_result_cache(self, eval_result_cache: Eval_Result):
+        self.eval_result_cache_val = eval_result_cache

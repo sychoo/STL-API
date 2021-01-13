@@ -1,2 +1,5 @@
 #!/bin/bash
+echo $(dirname $0)
+cd $(dirname $0)/../
+
 find . -name '*.py' | xargs wc -l | sort -nr | less

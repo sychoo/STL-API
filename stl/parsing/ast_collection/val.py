@@ -285,7 +285,7 @@ class Boolean_Val(Primitive_Val):
             result = boolean_val.logical_and(result)
 
             # short circuit for the multiple logical and connectives
-            if result == Boolean_Val(py_obj=False):
+            if result.logical_equals(Boolean_Val(py_obj=False)).value:
                 return result
 
         return result
@@ -300,7 +300,7 @@ class Boolean_Val(Primitive_Val):
             result = boolean_val.logical_or(result)
 
             # short circuit for the multiple logical and connectives
-            if result == Boolean_Val(py_obj=True):
+            if result.logical_equals(Boolean_Val(py_obj=True)).value:
                 return result
 
         return result
