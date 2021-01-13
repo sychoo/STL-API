@@ -26,6 +26,10 @@ class Eval_Context:
         # update the current context
         self.context.update({id_name: {"id_value": id_value, "attr": attr}})
 
+    def has_id(self, id_expr):
+        """check if the context has a particular identifier"""
+        return id_expr.name in self.context.keys()
+
     def lookup(self, id_expr):
         try:
             return self.context[id_expr.name]["id_value"]

@@ -3,15 +3,135 @@
 from stl.tool import String_Builder
 import stl.error as error
 
-from stl.parsing.ast_collection.core import Expr, STL_Expr
+from stl.parsing.ast_collection.core import Expr
 from stl.parsing.ast_collection.val import Boolean_Val, Float_Val
 
 import stl.parsing.type as types
 from typing import Optional
 from abc import ABC
 
-from stl.parsing.ast_collection.val import Id_Val
+from stl.parsing.ast_collection.val import Id_Val, Int_Val
 from stl.obj.result import STL_Expr_Eval_Result
+
+
+class STL_Expr(Expr, ABC):
+    """super class for STL expressions"""
+
+    def __init__(self, operator: str, begin_time: Optional[Expr] = None, end_time: Optional[Expr] = None,
+                 begin_condition: Optional[Expr] = None, end_condition: Optional[Expr] = None):
+        """must supply an operator. all other parameters are optional"""
+
+        self.operator_val = operator
+        self.begin_time_val = begin_time
+        self.end_time_val = end_time
+        self.begin_condition_val = begin_condition
+        self.end_condition_val = end_condition
+
+    def type_check(self, type_context) -> types.Type:
+        """type check all available attributes of STL expression"""
+        if self.begin_time:
+            begin_time_type = self.begin_time.type_check(type_context)
+
+            if begin_time_type != types.Int():
+                raise error.Type_Error(
+                    "Begin time interval for STL expression must be of type Int. It is now of type " +
+                    str(begin_time_type)
+                )
+
+        if self.end_time:
+            end_time_type = self.end_time.type_check(type_context)
+
+            if end_time_type != types.Int():
+                raise error.Type_Error(
+                    "End time interval for STL expression must be of type Int. It is now of type " +
+                    str(end_time_type)
+                )
+
+        if self.begin_condition:
+            begin_condition_type = self.begin_condition.type_check(type_context)
+
+            if begin_condition_type != types.Boolean():
+                raise error.Type_Error(
+                    "Conditional expressions for STL expressions must be of type Boolean. It is now of type " +
+                    str(begin_condition_type)
+                )
+
+        if self.end_condition:
+            end_condition_type = self.end_condition.type_check(type_context)
+
+            if end_condition_type != types.Boolean():
+                raise error.Type_Error(
+                    "End conditional expressions for STL expressions must be of type Boolean. It is now of type " +
+                    str(end_condition_type)
+                )
+
+        return types.STL  # default behavior
+
+    def eval(self, eval_context) -> None:
+        """evaluate the time interval specified by the user"""
+        # calculate local (actual) time for conditional expression signal slicing
+        # add local_begin_time and local_end_time to the context for accessing from conditional expression evaluation
+
+        global_begin_time = eval_context.lookup(Id_Val("global_begin_time"))
+
+        if self.begin_time is not None:
+            stl_expr_begin_time = self.begin_time.eval(eval_context)
+            local_begin_time = global_begin_time + stl_expr_begin_time
+            eval_context.add(Id_Val("local_begin_time"), local_begin_time)
+
+        if self.end_time is not None:
+            stl_expr_end_time = self.end_time.eval(eval_context)
+            local_end_time = global_begin_time + stl_expr_end_time
+            eval_context.add(Id_Val("local_end_time"), local_end_time)
+
+
+
+
+    def __str__(self):
+        pass
+
+    #######################
+    # getters and setters #
+    #######################
+    @property
+    def operator(self):
+        return self.operator_val
+
+    @operator.setter
+    def operator(self, operator: str):
+        self.operator_val = operator
+
+    @property
+    def begin_time(self):
+        return self.begin_time_val
+
+    @begin_time.setter
+    def begin_time(self, begin_time: Expr):
+        self.begin_time_val = begin_time
+
+    @property
+    def end_time(self):
+        return self.end_time_val
+
+    @end_time.setter
+    def end_time(self, end_time: Expr):
+        self.end_time_val = end_time
+
+    @property
+    def begin_condition(self):
+        return self.begin_condition_val
+
+    @begin_condition.setter
+    def begin_condition(self, begin_condition: Expr):
+        self.begin_condition_val = begin_condition
+
+    @property
+    def end_condition(self):
+        return self.end_condition_val
+
+    @end_condition.setter
+    def end_condition(self, end_condition: Expr):
+        self.end_condition_val = end_condition
 
 
 class Unary_STL_Expr(STL_Expr, ABC):
@@ -69,34 +189,27 @@ class G_STL_Expr(Unary_STL_Expr, ABC):
     """support the globally STL expression"""
 
     def eval(self, eval_context):
-        global_begin_time = eval_context.lookup(Id_Val("global_begin_time"))
+        super().eval(eval_context)
 
-        stl_expr_begin_time = self.begin_time.eval(eval_context)
-        stl_expr_end_time = self.end_time.eval(eval_context)
-
-        # calculate local (actual) time for conditional expression signal slicing
-        local_begin_time = global_begin_time + stl_expr_begin_time
-        local_end_time = global_begin_time + stl_expr_end_time
-
-        # add local_begin_time and local_end_time to the context for accessing from conditional expression evaluation
-        eval_context.add(Id_Val("local_begin_time"), local_begin_time)
-        eval_context.add(Id_Val("local_end_time"), local_end_time)
-
-        # todo return STL_Expr_Eval_Result in the conditional expression evaluation
-        # TODO: condition_expr will return a list of truth values (types.Boolean) and a list of robustness values (types.Int) between the local_begin_time and the local_end_time
         satisfy_list, robustness_list = self.begin_condition.eval(eval_context)
         result_satisfy = Boolean_Val.logical_and_list(satisfy_list).value
         result_robustness = Float_Val.min_of_list(robustness_list).value
 
-
-        # todo: unimport STL_Expr_Eval_Result
         return STL_Expr_Eval_Result(satisfy=result_satisfy, robustness=result_robustness)
 
 
-
+# TODO: what's robustness with respect to F?
 class F_STL_Expr(Unary_STL_Expr, ABC):
     """support the future STL expression"""
-    pass
+
+    def eval(self, eval_context):
+        super().eval(eval_context)
+
+        satisfy_list, robustness_list = self.begin_condition.eval(eval_context)
+        result_satisfy = Boolean_Val.logical_or_list(satisfy_list).value
+        # result_robustness = Float_Val.min_of_list(robustness_list).value
+
+        return STL_Expr_Eval_Result(satisfy=result_satisfy) #,robustness=result_robustness)
 
 
 class X_STL_Expr(Unary_STL_Expr, ABC):
@@ -104,75 +217,37 @@ class X_STL_Expr(Unary_STL_Expr, ABC):
 
     # override Unary_STL_Expr init function, since X doesn't require the passing of a time interval.
     # instead it only requires a fixed time point
-    def __init__(self, op, time_interval_expr, condition_expr):
-        self.op = op
-        self.time_interval_expr = time_interval_expr
-        self.condition_expr = condition_expr
+    def __init__(self, operator, begin_time: Expr, begin_condition: Expr):
+        super().__init__(operator, begin_time, None, begin_condition)
 
     def __str__(self):
         sb = String_Builder()
         sb.append("Unary_STL_Expr: ( ")
-        sb.append(self.op)
+        sb.append(self.operator)
         sb.append(" [")
-        sb.append(str(self.time_interval_expr))
+        sb.append(str(self.begin_time))
         sb.append("] (")
-        sb.append(str(self.condition_expr))
+        sb.append(str(self.begin_condition))
         sb.append(")")
 
         return str(sb)
 
     def eval(self, eval_context):
-        """add the pointer to the signal val to the context "$this$ -> signal_dict"""
-        # op, time_interval_expr, condition_expr, time_expr, signal_val
-        # debug
-        # print(eval_context)
+        """override the super() eval, to adjust the offset of time"""
+        global_begin_time = eval_context.lookup(Id_Val("global_begin_time"))
 
-        # op, begin_expr, end_expr, condition_expr, time, signal):
-        # evaluate the begin and the end time and time (time start for the signal)
-        self.time_interval_expr = self.time_interval_expr.eval(eval_context)
-        self.time_expr = self.time_expr.eval(eval_context)
-        self.signal_val = self.signal_val.eval(eval_context)
+        stl_expr_begin_time = self.begin_time.eval(eval_context)
+        local_begin_time = global_begin_time + stl_expr_begin_time
+        eval_context.add(Id_Val("local_begin_time"), local_begin_time + Int_Val(1))  # offset by 1 for Next operator
 
-        # print("signal val type: " + str(type(self.signal_val)))
+        eval_context.add(Id_Val("local_end_time"), local_begin_time + Int_Val(1))
 
-        # convert both time to Python Int object
-        self.time_interval_expr_int = self.time_interval_expr.to_py_obj()
-        self.time_expr_int = self.time_expr.to_py_obj()
+        satisfy_list, robustness_list = self.begin_condition.eval(eval_context)
+        result_satisfy = Boolean_Val.logical_and_list(satisfy_list).value
+        result_robustness = Float_Val.min_of_list(robustness_list).value
 
-        # only keep the signal value between certain time interval
-        # $this -> slided Signal val
-        # add $this meta variable to the context that refer to the signal that is currently begin evaluated
-        # sliced signal will be offset by self.time_expr
-        # offset_begin_expr_int = self.begin_expr_int + self.time_expr_int
-        # offset_end_expr_int = self.end_expr_int + self.time_expr_int
-        offset_time_interval_int = self.time_interval_expr_int + self.time_expr_int
+        return STL_Expr_Eval_Result(satisfy=result_satisfy, robustness=result_robustness)
 
-        # print("slice begin: " + str(offset_begin_expr_int))
-        # print("slide end: " + str(offset_end_expr_int))
-        eval_context.add(Meta_Id_Val("$this"), self.signal_val.slice_signal_by_time_interval(offset_time_interval_int,
-                                                                                             offset_time_interval_int))
-
-        # print(eval_context)
-        # for time in range(self.begin_expr_int + self.time_expr_int, self.end_expr_int + 1 + self.time_expr_int):
-        # eval_context.add(Meta_Id_Val("$" + str(time) + ".content"), self.signal_val.get_signal_dict()[str(time)])
-
-        # TODO: add values in the signal (self.signal) to the evaluation_context
-        # loop through time_begin to time_end (int)
-
-        # add to_py_obj(self) to primitive values and signal value (dictionary)
-        # i.e. [2, 3] evaluate $2.param and $3.param
-
-        # $1.param -> 7
-        # $2.param -> 10
-        # $3.param -> 15
-        # Lexer: META_IDENTIFIER = $ IDENTIFIER
-        # META_IDENTIFIER.eval(context, signal)
-        # eval function will evaluate all META_IDENTIFIERS associated with the param
-
-        # implicitly evaluate the meta variables
-        self.condition_expr = self.condition_expr.eval(eval_context)
-
-        return self.condition_expr
 
 
 class U_STL_Expr(Binary_STL_Expr, ABC):

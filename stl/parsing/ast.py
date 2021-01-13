@@ -2,7 +2,6 @@ from stl.parsing.ast_collection.core import\
     Node,\
     Expr,\
     Primitive_Expr,\
-    STL_Expr,\
     Val
 
 
@@ -17,6 +16,7 @@ from stl.parsing.ast_collection.primitive_expr import\
 
 
 from stl.parsing.ast_collection.stl_expr import\
+    STL_Expr,\
     Unary_STL_Expr,\
     Binary_STL_Expr,\
     G_STL_Expr,\

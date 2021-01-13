@@ -26,12 +26,12 @@ class STL:
     lexer = Lexer()
     parser = Parser()
 
-    def __init__(self, expr: str):
-        self.expr = expr  # do not evaluate when user has not passed in the time_begin and signal
+    def __init__(self, value: str):
+        self.value_val = value  # do not evaluate when user has not passed in the time_begin and signal
 
     def eval(self, time_begin: int, signal: Signal) -> Eval_Result:
         interpreter = Interpreter(time_begin, signal, self.lexer, self.parser)
-        return interpreter.interpret(self.expr)
+        return interpreter.interpret(self.value)
 
     def satisfy(self, time_begin, signal: Signal):
         pass
@@ -41,3 +41,11 @@ class STL:
 
     def probability(self, time_begin, signal: Signal):
         pass
+
+    @property
+    def value(self):
+        return self.value_val
+
+    @value.setter
+    def value(self, value: str):
+        self.value_val = value

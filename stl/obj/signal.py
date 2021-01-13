@@ -8,7 +8,7 @@ import stl.error as err
 from typing import Any
 from collections import OrderedDict
 import stl.obj.util as util
-
+import logging
 # JSON reference
 # json.loads(JSON str) -> dict (decode)
 # json.dumps(dict) -> JSON str (encode)
@@ -231,7 +231,7 @@ class Signal:
 
         # by default, begin and end range are the bound for the entire signal
         begin_range = 0
-        end_range = len(self)
+        end_range = len(self) - 1
 
         if begin_time is not None:
             begin_range = begin_time
@@ -239,11 +239,26 @@ class Signal:
         if end_time is not None:
             end_range = end_time
 
+        if begin_range > end_range:
+            raise error.Signal_Error("begin_range of signal must be smaller than end_range of signal! " +
+                                     "begin_range = " + str(begin_range) +
+                                     "end_range = " + str(end_range))
+
+        if begin_range >= len(self) or begin_range < 0 or end_range >= len(self) or end_range < 0:
+            raise error.Signal_Error("Signal Index Out of Range! " +
+                                     "begin_range = " + str(begin_range) +
+                                     ", end_range = " + str(end_range) +
+                                     ", signal length = " + str(len(self)))
+
         for i in range(begin_range, end_range + 1):  # note that the end time will be included
             current_signal_content = self._signal_data[str(i)]["content"]
 
-            for key in id_name_split:
-                current_signal_content = current_signal_content[key]
+            try:
+                for key in id_name_split:
+                    # print(key)
+                    current_signal_content = current_signal_content[key]
+            except Exception as e:
+                logging.exception(e)
 
             if ll:
                 result.append(util.py_obj_to_ll_obj(current_signal_content, int_to_float=True))

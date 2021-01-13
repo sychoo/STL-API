@@ -9,6 +9,7 @@ from typing import Optional, Any
 # from stl.parsing.ast_collection.val import Boolean_Val
 
 class Node(metaclass=ABCMeta):  # metaclass=abc.ABCMeta support abstract method definition
+
     """super class for all nodes in the AST (abstract syntax tree)"""
 
     @abstractmethod
@@ -76,120 +77,6 @@ class Primitive_Expr(Expr, ABC):
         self.rhs_val = rhs
 
 
-class STL_Expr(Expr, ABC):
-    """super class for STL expressions"""
-
-    def __init__(self, operator: str, begin_time: Optional[Expr] = None, end_time: Optional[Expr] = None,
-                 begin_condition: Optional[Expr] = None, end_condition: Optional[Expr] = None):
-        """must supply an operator. all other parameters are optional"""
-
-        self.operator_val = operator
-        self.begin_time_val = begin_time
-        self.end_time_val = end_time
-        self.begin_condition_val = begin_condition
-        self.end_condition_val = end_condition
-
-    def type_check(self, type_context) -> types.Type:
-        """type check all available attributes of STL expression"""
-        if self.begin_time:
-            begin_time_type = self.begin_time.type_check(type_context)
-
-            if begin_time_type != types.Int():
-                raise error.Type_Error(
-                    "Begin time interval for STL expression must be of type Int. It is now of type " +
-                    str(begin_time_type)
-                )
-
-        if self.end_time:
-            end_time_type = self.end_time.type_check(type_context)
-
-            if end_time_type != types.Int():
-                raise error.Type_Error(
-                    "End time interval for STL expression must be of type Int. It is now of type " +
-                    str(end_time_type)
-                )
-
-        if self.begin_condition:
-            begin_condition_type = self.begin_condition.type_check(type_context)
-
-            if begin_condition_type != types.Boolean():
-                raise error.Type_Error(
-                    "Conditional expressions for STL expressions must be of type Boolean. It is now of type " +
-                    str(begin_condition_type)
-                )
-
-        if self.end_condition:
-            end_condition_type = self.end_condition.type_check(type_context)
-
-            if end_condition_type != types.Boolean():
-                raise error.Type_Error(
-                    "End conditional expressions for STL expressions must be of type Boolean. It is now of type " +
-                    str(end_condition_type)
-                )
-
-        return types.STL  # default behavior
-
-    def eval(self, eval_context) -> None:
-        """evaluate all available attributes of STL expression"""
-        if self.begin_time:
-            self.begin_time(self.begin_time.eval(eval_context))
-        
-        if self.end_time:
-            self.end_time(self.end_time.eval(eval_context))
-        
-        if self.begin_condition:
-            self.begin_condition(self.begin_condition.eval(eval_context))
-        
-        if self.end_condition:
-            self.end_condition(self.end_condition.eval(eval_context))
-
-    def __str__(self):
-        pass
-
-    #######################
-    # getters and setters #
-    #######################
-    @property
-    def operator(self):
-        return self.operator_val
-
-    @operator.setter
-    def operator(self, operator: str):
-        self.operator_val = operator
-
-    @property
-    def begin_time(self):
-        return self.begin_time_val
-
-    @begin_time.setter
-    def begin_time(self, begin_time: Expr):
-        self.begin_time_val = begin_time
-
-    @property
-    def end_time(self):
-        return self.end_time_val
-
-    @end_time.setter
-    def end_time(self, end_time: Expr):
-        self.end_time_val = end_time
-
-    @property
-    def begin_condition(self):
-        return self.begin_condition_val
-
-    @begin_condition.setter
-    def begin_condition(self, begin_condition: Expr):
-        self.begin_condition_val = begin_condition
-
-    @property
-    def end_condition(self):
-        return self.end_condition_val
-
-    @end_condition.setter
-    def end_condition(self, end_condition: Expr):
-        self.end_condition_val = end_condition
-
-
 class Val(Expr, ABC, metaclass=ABCMeta):
     """super class for values, store primitive value types"""
 
@@ -244,6 +131,4 @@ class Val(Expr, ABC, metaclass=ABCMeta):
 
     def type_check(self, type_context):
         return self.value_type
-
-
 

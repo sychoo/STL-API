@@ -47,7 +47,7 @@ class Binary_Comp_Expr(Binary_Expr):
         lhs_type = self.lhs.type_check(type_context)
         rhs_type = self.rhs.type_check(type_context)
 
-        if (lhs_type == types.Int() and rhs_type == types.FLoat()) or \
+        if (lhs_type == types.Int() and rhs_type == types.Float()) or \
                 (lhs_type == types.Float() and rhs_type == types.Int()):
             return types.Boolean()
 
@@ -141,17 +141,17 @@ class Binary_Comp_Expr(Binary_Expr):
 
         # lhs = [...]
         # rhs = [...]
-        elif (isinstance(self.lhs, list)) and (isinstance(self.rhs, list)):
+        elif (isinstance(lhs, list)) and (isinstance(rhs, list)):
             # evaluated boolean value list
             evaluated_boolean_val_list = list()
 
             # case when lhs is a list, but not the rhs
-            lhs_list_len = len(self.lhs)
-            rhs_list_len = len(self.rhs)
+            lhs_list_len = len(lhs)
+            rhs_list_len = len(rhs)
 
             if lhs_list_len != rhs_list_len:
                 raise RuntimeError(
-                    "list values doesn't match! lhs = " + str(self.lhs) + " rhs = " + str(self.rhs))
+                    "list values doesn't match! lhs = " + str(lhs) + " rhs = " + str(rhs))
 
             for index in range(lhs_list_len):
                 satisfy_val, robustness_val = Binary_Comp_Expr(

@@ -62,6 +62,7 @@ class Primitive_Val(Val, ABC):
         # convert to python object
         return self.value
 
+
 class Int_Val(Primitive_Val):
     def __init__(self, value: Optional[str] = None, value_type: types.Type = types.Int(), py_obj: Optional[int] = None):
         if py_obj is not None:
@@ -221,6 +222,7 @@ class Float_Val(Primitive_Val):
             py_obj_list.append(float_val.value)
         return Float_Val(py_obj=min(py_obj_list))
 
+
 class String_Val(Primitive_Val):
     def __init__(self, value: str, value_type: types.Type = types.String(), py_obj: Optional[bool] = None):
         if py_obj is not None:
@@ -291,7 +293,7 @@ class Boolean_Val(Primitive_Val):
     @staticmethod
     def logical_or_list(boolean_val_list):
         """super for F: Eventually operator"""
-        result = Boolean_Val(py_obj=True)  # by default result is set to True
+        result = Boolean_Val(py_obj=False)  # by default result is set to True
 
         # loop through the boolean value list and calculate the logical and value
         for boolean_val in boolean_val_list:
@@ -302,6 +304,7 @@ class Boolean_Val(Primitive_Val):
                 return result
 
         return result
+
 
 class Id_Val(Val):
     """stores identifier of the variable, variable expression
@@ -348,8 +351,8 @@ class Id_Val(Val):
 
     def eval(self, eval_context):
         """return a list of low-level values sliced by the local_begin_time and local_end_time"""
-        local_begin_time = eval_context.lookup(Id_Val("local_begin_time"))
-        local_end_time = eval_context.lookup(Id_Val("local_end_time"))
+        local_begin_time: Int_Val = eval_context.lookup(Id_Val("local_begin_time"))
+        local_end_time: Int_Val = eval_context.lookup(Id_Val("local_end_time"))
 
         result: list = eval_context.lookup_signal(self, begin_time=local_begin_time, end_time=local_end_time)
         return result
@@ -372,85 +375,3 @@ class Id_Val(Val):
             return Eval_Result_Transformer(self.cached_eval_result).transform()
         else:
             return None
-
-
-class Meta_Id_Val(Val):
-    """stores identifier of the variable, variable expression
-    stores
-            type signature
-            variable identifier signature
-            and STL formula operator
-    """
-
-    def __init__(self, var_id):
-        """take the identifier name of the variable"""
-        self.var_id = var_id
-
-    def __str__(self):
-        sb = String_Builder()
-        sb.append("Meta_Id_Val: ( ")
-        sb.append(self.var_id)
-        sb.append(" )")
-
-        return str(sb)
-
-    def get_id(self):
-        return self.var_id
-
-    def eval(self, eval_context):
-        """eval function for Meta_Identifier will generate a list of evaluations for further comparisons for relational operators"""
-        # debugger
-
-        # next step:
-        # for each binary/unary comparison, logic, arithmetic operations,
-        # add comparison of [] list, which will check whether all list of values satisfies the condition
-        # evalute a meta identifier
-        # $1.content -> {"param" : param}
-        # return a list of values?
-
-        # self.var_id : meta variable's name, i.e. $param
-        # lookup_value_list = list()
-
-        # context_var_ids = eval_context.get_current_conext_var_id()
-
-        # loop through all the variable ids
-        # for var_id in context_var_ids:
-
-        # list for accumulating the overall value
-        value_list = list()
-
-        # look for the valid signal dictionary in the evaluation context
-        # this will look something like {"1": {"content": {}}, "2": {"content": {}}, ... }
-        valid_signal_dict = eval_context.lookup(Meta_Id_Val("$this")).get_signal_dict()
-
-        # get rid of the "$" - dollar sign at the beginning
-        self.var_id = self.var_id[1:]
-
-        # parse the self.var_id - the variable name for the current meta variable
-        splited_var_id_list = self.var_id.split(".")
-
-        # look up the concrete variable in the signal dictionary
-        for time_index in valid_signal_dict.keys():
-            valid_signal_dict_content = valid_signal_dict[time_index]["content"]
-
-            # recursively look up the splited var id until reaching the right level
-            for splited_var_id in splited_var_id_list:
-                valid_signal_dict_content = valid_signal_dict_content[splited_var_id]
-
-            # only allow int -> Int_Val at current stage
-            # TODO: array -> Array_Val
-            if isinstance(valid_signal_dict_content, int):
-                # append the obtained value to the value_list
-                value_list.append(Int_Val(valid_signal_dict_content))
-
-                # signal_content_dict = eval_context.lookup(Meta_Id_Val(var_id))
-        # get rid of the $ sign when looking it up in the signal dictionary
-        # lookup_value_list.append(signal_content_dict[self.var_id[1:]])
-        # return eval_context.lookup(self)
-        # print(value_list)
-
-        return value_list
-
-    def type_check(self, type_context):
-        # do not require type check, simply pass
-        pass

@@ -105,16 +105,17 @@ class STL_Expr_Eval_Result(Eval_Result, ABC):
     """
 
     def __init__(self, satisfy: bool,
-                 robustness: float,
+                 robustness: Optional[float] = None,
                  probability: Optional[float] = None):
         super().__init__(satisfy=satisfy, robustness=robustness, probability=probability)
 
-        # ensure satisfaction matches the robustness
-        if (satisfy and robustness < 0) or (not satisfy and robustness > 0):
-            raise error.Result_Error("satisfaction value does not match the robustness value! satisfaction value = " + str(satisfy) + ", robustness value = " + str(robustness))
+        if robustness is not None:
+            # ensure satisfaction matches the robustness
+            if (satisfy and robustness < 0) or (not satisfy and robustness > 0):
+                raise error.Result_Error("satisfaction value does not match the robustness value! satisfaction value = " + str(satisfy) + ", robustness value = " + str(robustness))
 
         # probability must be between 0 and 1
-        if probability:
+        if probability is not None:
             if 0 <= probability <= 1:
                 pass
             else:
@@ -124,9 +125,9 @@ class STL_Expr_Eval_Result(Eval_Result, ABC):
         sb = String_Builder()
         sb.append("satisfy     : ")
         sb.append(str(self.satisfy_val))
-        sb.append("\n")
 
         if self.robustness is not None:
+            sb.append("\n")
             sb.append("robustness  : ")
             sb.append(str(self.robustness_val))
 
