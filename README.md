@@ -86,6 +86,40 @@ robustness : float = stl_eval.robustness
 ```
 ### 
 
+### Usage (REPL)
+We can simply the usage procedure above into a simply REPL interface. Users can start the REPL by typing `stlinterp` on
+the command line
+
+```bash
+$ stlinterp
+Time Start: 0
+Signal:
+{
+    "0": {
+        "content": {
+            "x": 1,
+            "y": 2
+        }
+    },
+    "1": {
+        "content": {
+            "x": 2,
+            "y": 1
+        }
+    }
+}
+Please enter STL expressions to be interpreted.
+>>>
+```
+
+Once the REPL is started, it will prompt you to enter the STL expression. Users can simply type the expression
+`G[0, 1](x > y)` after the `>>> `, click `Enter` to evaluate the expression.
+```bash
+>>> G[0, 1](x > y)
+satisfy     : False
+robustness  : -1.0
+```
+
 
 ## Project Structure
 - API-level interfaces (high-level)
