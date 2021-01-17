@@ -2,6 +2,8 @@
 # Created by Simon Chu
 # define the standard format for the signal
 
+# from __future__ import annotations  # for returning the type of object it is defining
+
 import json
 import stl.error as err
 
@@ -14,6 +16,7 @@ import logging
 # json.dumps(dict) -> JSON str (encode)
 import stl.error as error
 from typing import Optional
+
 
 class Signal:
     """handles signal processing, conversion between JSON and Python dictionary
@@ -213,9 +216,29 @@ class Signal:
     def __len__(self) -> int:
         return len(self._signal_data)
 
-    # TODO: lookup signal by identifier's name
+    def get(self, begin_time: int, end_time: int) -> 'Signal':
+        """get slice of signal by begin and end time
+
+        Usage:
+            >>> from stl.api import Signal
+            >>> sig = Signal(py_dict = {"0": {"content": {"x": 0, "y": {"z": 0}}}, "1": {"content": {"x": 0, "y": {"z": 2}}}})
+            >>> sig.get(0, 0)
+            >>> Signal({"0": {"content": {"x": 0, "y": {"z": 0}}}})
+            >>> sig.get(1, 1)  # re-indexing occurs here. 1 is re-indexed to 0
+            >>> Signal({"0": {"content": {"x": 0, "y": {"z": 2}}}})
+        """
+        result = Signal()
+        for i in range(begin_time, end_time + 1):  # note that the end time will be included
+            curr_signal_element: dict = self._signal_data[str(i)]["content"]
+            result.append(py_dict=curr_signal_element)
+
+        return result
+
     def lookup(self, id_name: str, ll: bool = False, begin_time: Optional[int] = None, end_time: Optional[int] = None):
-        """ll flag: low-level flag, whether to convert the looked up python object to low-level (parser/lexer level)
+        """
+        lookup groups of signals by identifiers name
+
+        ll flag: low-level flag, whether to convert the looked up python object to low-level (parser/lexer level)
         objects
 
         Usage:
@@ -239,11 +262,12 @@ class Signal:
         if end_time is not None:
             end_range = end_time
 
-        if begin_range > end_range:
+        if begin_range > end_range:  # ensure begin_range <= end_range
             raise error.Signal_Error("begin_range of signal must be smaller than end_range of signal! " +
                                      "begin_range = " + str(begin_range) +
                                      "end_range = " + str(end_range))
 
+        # ensure ranges are within the bound
         if begin_range >= len(self) or begin_range < 0 or end_range >= len(self) or end_range < 0:
             raise error.Signal_Error("Signal Index Out of Range! " +
                                      "begin_range = " + str(begin_range) +

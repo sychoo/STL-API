@@ -2,7 +2,6 @@
 # initiate unit test module for STL API
 
 # store the directory where the user invoked the stl command
-exec_dir="$(pwd)"
-cd $(dirname $0)
+cd $(dirname $0)/../
 
 python3 -m stl.unit_test
