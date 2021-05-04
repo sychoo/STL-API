@@ -1,4 +1,5 @@
 # STL API
+
 ## Motivation
 STL API is used to evaluate **Signal Temporal Logic** specification with respect to
 an arbitrary signal.
@@ -154,6 +155,16 @@ robustness  : -1.0
 - example folder is in stl folder for unit-test purpose, a symbolic link for example folder is created in the 
   project root directory
 
+## Common Issues
+- Vscode PyLint "Unable to Import" Error
+  - See [Stackoverflow](https://stackoverflow.com/questions/1899436/pylint-unable-to-import-error-how-to-set-pythonpath)
+  - create `~/.pylintrc` with the following content
+    ```bash
+    [MASTER]
+    init-hook='import sys; sys.path.append("/path/to/STL-API")'
+    ```
+    Note that please replace `/path/to/STL-API` with the actual __absolute path__ to the location of the respository
+    
 ## Future Features
 - syntax for absolute value
   - `G[0, 1](|y| > 1)` means that the absolute value of y must be greater than 1 between time 0 and 1 of the signal
