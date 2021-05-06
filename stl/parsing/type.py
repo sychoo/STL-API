@@ -62,6 +62,13 @@ class Unresolved(Type):
         super().__init__("Unresolved")
 
 
+def is_numeric(*type_objs):
+    for type_obj in type_objs:
+        if not (type_obj == Int() or type_obj == Float()):
+            return False
+    return True
+
+
 class Type_Selector:
     """convert string-formatted types to type objects"""
     @staticmethod

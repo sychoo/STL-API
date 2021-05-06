@@ -185,14 +185,36 @@ class Binary_STL_Expr(STL_Expr, ABC):
         return str(sb)
 
 
-class G_STL_Expr(Unary_STL_Expr, ABC):
+class G_Expr(Unary_STL_Expr, ABC):
     """support the globally STL expression"""
 
+    # def eval(self, eval_context):
+    #     super().eval(eval_context)
+
+    #     # return type Tuple[Union[Boolean_Val, list[Boolean_Val]], Union[Float_Val, list[Float_Val]]]
+        
+    #     satisfy = self.begin_condition.eval(eval_context, embedded=True)
+    #     result = None
+
+    #     if isinstance(satisfy, list):
+    #         result_satisfy = Boolean_Val.logical_and_list(satisfy).value
+    #         result = STL_Expr_Eval_Result(satisfy=result_satisfy, robustness=0.0)
+
+    #     elif isinstance(satisfy, Boolean_Val):
+    #         result = STL_Expr_Eval_Result(satisfy=satisfy.value, robustness=0.0)
+
+    #     return result
+
+    def weaken(self, option: str, *param):
+        """weaken the STL formula on the AST level"""
+
+        pass
     def eval(self, eval_context):
         super().eval(eval_context)
 
         # return type Tuple[Union[Boolean_Val, list[Boolean_Val]], Union[Float_Val, list[Float_Val]]]
-        satisfy, robustness = self.begin_condition.eval(eval_context)
+        
+        satisfy, robustness = self.begin_condition.eval(eval_context, embedded=True)
         result = None
 
         if isinstance(satisfy, list) and isinstance(robustness, list):
@@ -207,14 +229,14 @@ class G_STL_Expr(Unary_STL_Expr, ABC):
 
 
 # TODO: what's robustness with respect to F?
-class F_STL_Expr(Unary_STL_Expr, ABC):
+class F_Expr(Unary_STL_Expr, ABC):
     """support the future STL expression"""
 
     def eval(self, eval_context):
         super().eval(eval_context)
 
         # return type Tuple[Union[Boolean_Val, list[Boolean_Val]], Union[Float_Val, list[Float_Val]]]
-        satisfy, robustness = self.begin_condition.eval(eval_context)
+        satisfy, robustness = self.begin_condition.eval(eval_context, embedded=True)
         result = None
 
         if isinstance(satisfy, list) and isinstance(robustness, list):
@@ -228,7 +250,7 @@ class F_STL_Expr(Unary_STL_Expr, ABC):
         return result
 
 
-class X_STL_Expr(Unary_STL_Expr, ABC):
+class X_Expr(Unary_STL_Expr, ABC):
     """support the future STL expression"""
 
     # override Unary_STL_Expr init function, since X doesn't require the passing of a time interval.
@@ -258,7 +280,7 @@ class X_STL_Expr(Unary_STL_Expr, ABC):
 
         eval_context.add(Id_Val("local_end_time"), local_begin_time + Int_Val(1))
 
-        satisfy_list, robustness_list = self.begin_condition.eval(eval_context)
+        satisfy_list, robustness_list = self.begin_condition.eval(eval_context, embedded=True)
         result_satisfy = Boolean_Val.logical_and_list(satisfy_list).value
         result_robustness = Float_Val.min_of_list(robustness_list).value
 
@@ -266,17 +288,17 @@ class X_STL_Expr(Unary_STL_Expr, ABC):
 
 
 
-class U_STL_Expr(Binary_STL_Expr, ABC):
+class U_Expr(Binary_STL_Expr, ABC):
     pass
 
 
-class R_STL_Expr(Binary_STL_Expr, ABC):
+class R_Expr(Binary_STL_Expr, ABC):
     pass
 
 
-class W_STL_Expr(Binary_STL_Expr, ABC):
+class W_Expr(Binary_STL_Expr, ABC):
     pass
 
 
-class M_STL_Expr(Binary_STL_Expr, ABC):
+class M_Expr(Binary_STL_Expr, ABC):
     pass

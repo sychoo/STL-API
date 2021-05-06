@@ -30,51 +30,11 @@ class Expr(Node, ABC):
     """super class for expressions"""
     pass
 
-
 class Primitive_Expr(Expr, ABC):
-    """super class for all primitive expressions, like arithmetic, logic and comparison expressions"""
-    def __init__(self, operator: str, operator_type: str, lhs: Optional[Expr], rhs: Expr):
-        # unary expr does not have lhs_expr, thus Optional
-        self.operator_val = operator
-        self.operator_type_val = operator_type
-        self.lhs_val = lhs
-        self.rhs_val = rhs
+    """super class for primitive expressions"""
+    pass
 
-    #######################
-    # getters and setters #
-    #######################
 
-    @property
-    def operator(self):
-        return self.operator_val
-
-    @operator.setter
-    def operator(self, operator: str):
-        self.operator_val = operator
-
-    @property
-    def operator_type(self):
-        return self.operator_type_val
-
-    @operator_type.setter
-    def operator_type(self, operator_type: str):
-        self.operator_type = operator_type
-
-    @property
-    def lhs(self):
-        return self.lhs_val
-
-    @lhs.setter
-    def lhs(self, lhs: Expr):
-        self.lhs_val = lhs
-
-    @property
-    def rhs(self):
-        return self.rhs_val
-
-    @rhs.setter
-    def rhs(self, rhs: Expr):
-        self.rhs_val = rhs
 
 
 class Val(Expr, ABC, metaclass=ABCMeta):
@@ -126,7 +86,7 @@ class Val(Expr, ABC, metaclass=ABCMeta):
     def to_str(self):
         return str(self.value)
 
-    def eval(self, eval_context):
+    def eval(self, eval_context, embedded = False):
         return self
 
     def type_check(self, type_context):

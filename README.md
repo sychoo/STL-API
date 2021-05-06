@@ -1,5 +1,19 @@
 # STL API
 
+## Table of Contents
+- [Motivation](#motivation)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Python API](#python-api)
+  - [REPL](#repl)
+- [Structure](#structure)
+  - [Project Structure](#project-structure)
+  - [File Structure](#file-structure)
+- [FAQ](#faq)
+  - [Common Issues](#common-issues)
+  - [Special Notes](#special-notes)
+- [Future Work](#future-work)
+
 ## Motivation
 STL API is used to evaluate **Signal Temporal Logic** specification with respect to
 an arbitrary signal.
@@ -48,13 +62,34 @@ export STLPATH="/path/to/STL-API/"
 - rply (for parser and lexer)
 - termcolor (for color printing tools)
 
-## Usage
+## Features
+- Evaluate simple mathematical expressions and propositional logic
+- Calculate the robustness value of a signal with respect to an STL formula
+- Syntactically weaken the STL formula
+
+## Usage (Python API)
+
 Below we will be showing a simple example demonstrating the usage of the STL API by evaluating a simple STL expression `G[0, 1](x > y)` with respect to a signal
 
 To begin, we have to import the essential libraries from the STL API
 ```python
-from stl.api import Signal, STL
+from stl import Signal, STL
 ```
+
+### Simple Math Expressions
+```python
+spec = STL("1 + 1")
+# 2
+
+spec = STL("true => false")
+# False
+
+signal = Signal(py_dict={"0": {"content": {"x": 1, "y": 2}},
+                         "1": {"content": {"x": 2, "y": 1}}})  
+spec = STL("x > 0")
+# True
+```
+### Evaluate Signal with respect to STL Formula
 
 Then, we define a (global) start time in `int` type, as well as defining an arbitrary signal
 ```python
@@ -85,9 +120,23 @@ stl_eval: Eval_Result = stl_spec.eval(time_begin, signal)
 satisfy    : bool  = stl_eval.satisfy
 robustness : float = stl_eval.robustness
 ```
-### 
 
-### Usage (REPL)
+### STL Formula Weakening
+We can also use the Python API to __weaken__ the constraint of an STL formula. For example, suppose we have an STL expression with the following form
+```python
+stl_spec = STL("G[0, 1](0 < x < 1)")
+```
+One way of weakening the formula is by relaxing the bound of the atomic proposition in the STL formula
+
+```python
+weakened_stl_spec_1 = stl_spec.weaken("ap-range", 2, 3)
+print(weakened_stl_spec_1)
+# G[0, 1]((0 - 2) < x < (1 + 3))
+
+weakened_stl_spec_2 = stl_spec.weaken("time-range", 2, 3)
+# G[0 - 2, 1 + 3](0 < x < 1)
+```
+## Usage (REPL)
 We can simply the usage procedure above into a simply REPL interface. Users can start the REPL by typing `stlinterp` on
 the command line
 
@@ -121,8 +170,9 @@ satisfy     : False
 robustness  : -1.0
 ```
 
+## Structure
 
-## Project Structure
+### Project Structure
 - API-level interfaces (high-level)
     - They are designed to be simple to use with minimal overhead for training and learning.
     - API-level interfaces include `stl.obj` as well as programs in `stl.api`.
@@ -131,7 +181,7 @@ robustness  : -1.0
       of the strings passed in from the API level. It is not intended to interact with the user directly.
     - It includes all modules in `stl.parsing`
 
-## File Structure
+### File Structure
 `bin/`: consists of bash scripts. must be added to system `PATH` variable to be executed on the command line.
   - `stllex`: start the REPL for the lexical analyzer
   - `stlparse`: start the REPL for the parser
@@ -151,11 +201,10 @@ robustness  : -1.0
   - `parsing/`: not intended to be used directly by the user. low-level (parser and lexer level objects, i.e. AST (abstract syntax tree), type signatures)
   - `error.py`: main entry point for importing errors
   - `err/`: all definition/implementation of errors
-## Special Notes
-- example folder is in stl folder for unit-test purpose, a symbolic link for example folder is created in the 
-  project root directory
 
-## Common Issues
+## FAQ
+
+### Common Issues
 - Vscode PyLint "Unable to Import" Error
   - See [Stackoverflow](https://stackoverflow.com/questions/1899436/pylint-unable-to-import-error-how-to-set-pythonpath)
   - create `~/.pylintrc` with the following content
@@ -165,7 +214,10 @@ robustness  : -1.0
     ```
     Note that please replace `/path/to/STL-API` with the actual __absolute path__ to the location of the respository
     
-## Future Features
+### Special Notes
+- example folder is in stl folder for unit-test purpose, a symbolic link for example folder is created in the project root directory
+
+## Future Work
 - syntax for absolute value
   - `G[0, 1](|y| > 1)` means that the absolute value of y must be greater than 1 between time 0 and 1 of the signal
   

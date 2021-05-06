@@ -349,10 +349,16 @@ class Id_Val(Val):
 
         return str(sb)
 
-    def eval(self, eval_context):
+    def eval(self, eval_context, embedded = False):
         """return a list of low-level values sliced by the local_begin_time and local_end_time"""
-        local_begin_time: Int_Val = eval_context.lookup(Id_Val("local_begin_time"))
-        local_end_time: Int_Val = eval_context.lookup(Id_Val("local_end_time"))
+
+        # by default, lookup the full length of the signal
+        local_begin_time: Optional[Int_Val] = None
+        local_end_time: Optional[Int_Val] = None
+
+        if eval_context.has_id(Id_Val("local_begin_time")) and eval_context.has_id(Id_Val("local_end_time")):
+            local_begin_time = eval_context.lookup(Id_Val("local_begin_time"))
+            local_end_time = eval_context.lookup(Id_Val("local_end_time"))
 
         result: list = eval_context.lookup_signal(self, begin_time=local_begin_time, end_time=local_end_time)
         return result

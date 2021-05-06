@@ -1,3 +1,8 @@
+- support robustness calculation for Unary not and binary arithmetic
+- separate robustness and satisfaction evaluation
+- how to properly evaluate the robustness without sacrificing display simple comparison 1 > 2
+- how to compose them?
+
 create UI for STL expression check
 migrate parser and lexer from STL Script to STL API
 

@@ -69,6 +69,9 @@ class STL:
                     "No Cached Evaluation Result Available." +
                     "Please Supply time_begin and signal parameter for evaluations")
 
+    def __str__(self):
+        return self.value
+        
     @property
     def value(self):
         return self.value_val

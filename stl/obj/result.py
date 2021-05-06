@@ -61,7 +61,7 @@ class Eval_Result(metaclass=ABCMeta):
 
     @robustness.setter
     def robustness(self, robustness: Union[float, int]):
-        self.robustness_val = robustness
+        self.robustness_val = float(robustness)
 
     @property
     def probability(self):
@@ -168,8 +168,8 @@ class Eval_Result_Transformer:
         elif isinstance(self.eval_result, list):
             return self.eval_result
         else:
-            raise error.Result_Error("Unsupported transformation of evaluation result of Type " +
-                                     self.eval_result.__class__.__name__)
+            raise error.Result_Error("Unsupported transformation of evaluation result of Type = " +
+                                     self.eval_result.__class__.__name__ + " Content = " + str(self.eval_result))
 
 
 def main():

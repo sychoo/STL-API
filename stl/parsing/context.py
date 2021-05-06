@@ -55,7 +55,13 @@ class Eval_Context:
         """look up the value for the corresponding identifier for the signal"""
         # get the signal data first
         signal = self.lookup(Id_Val("signal"))
-        result: list = signal.lookup(id_expr.name, begin_time=begin_time.value, end_time=end_time.value, ll=True)
+        result: Optional[list] = None
+
+        if begin_time != None and end_time != None:
+            result: list = signal.lookup(id_expr.name, begin_time=begin_time.value, end_time=end_time.value, ll=True)
+        else:
+            result: list = signal.lookup(id_expr.name, ll=True)
+            
         return result
 
 

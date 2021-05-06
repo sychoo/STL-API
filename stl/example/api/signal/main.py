@@ -4,7 +4,7 @@
 
 from typing import Any
 
-from stl.api import Signal
+from stl import Signal
 import stl.error as err
 
 

@@ -10,7 +10,7 @@ import stl.parsing.context as ctx
 from stl.parsing.ast_collection.val import Int_Val
 
 import stl.tool as tool
-from stl.api import Signal
+from stl import Signal
 import stl.parsing.type as types
 
 from typing import Optional

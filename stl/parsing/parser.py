@@ -101,16 +101,32 @@ class Parser:
             """extract parenthesis content"""
             return s[1]
 
-        @pg.production("expr : expr GREATER expr")
-        @pg.production("expr : expr GREATER_EQUAL expr")
-        @pg.production("expr : expr LESS expr")
-        @pg.production("expr : expr LESS_EQUAL expr")
-        @pg.production("expr : expr EQUAL_EQUAL expr")
-        @pg.production("expr : expr EQUAL expr")  # "=" equivalent to "==" for comparison
-        @pg.production("expr : expr NOT_EQUAL expr")
+        @pg.production("expr : expr comp_op expr comp_op expr")
+        def chain_comp_expr(s):
+            """chaining in comparison operators"""
+            return AST.Chain_Comp_Expr(s[1].getstr(), s[1].gettokentype(), s[3].getstr(), s[3].gettokentype(), s[0], s[2], s[4])
+
+        # @pg.production("expr : expr GREATER expr")
+        # @pg.production("expr : expr GREATER_EQUAL expr")
+        # @pg.production("expr : expr LESS expr")
+        # @pg.production("expr : expr LESS_EQUAL expr")
+        # @pg.production("expr : expr EQUAL_EQUAL expr")
+        # @pg.production("expr : expr EQUAL expr")  # "=" equivalent to "==" for comparison
+        @pg.production("expr : expr comp_op expr")
         def binary_comp_expr(s):
             """binary comparison expressions"""
             return AST.Binary_Comp_Expr(s[1].getstr(), s[1].gettokentype(), s[0], s[2])
+
+        @pg.production("comp_op : GREATER")
+        @pg.production("comp_op : GREATER_EQUAL")
+        @pg.production("comp_op : LESS")
+        @pg.production("comp_op : LESS_EQUAL")
+        @pg.production("comp_op : EQUAL_EQUAL")
+        @pg.production("comp_op : EQUAL")  # "=" equivalent to "==" for comparison
+        @pg.production("comp_op : NOT_EQUAL expr")
+        def binary_comp_op(s):
+            """binary comparison operators"""
+            return s[0]
 
         @pg.production("expr : LOGICAL_NOT expr")
         def unary_logic_expr(s):
@@ -165,9 +181,9 @@ class Parser:
             op = s[0].getstr()
 
             if op == "G" or op_type == "GLOBALLY":
-                return AST.G_STL_Expr(op, s[2], s[4], s[7])
+                return AST.G_Expr(op, s[2], s[4], s[7])
             elif op == "F" or op_type == "EVENTUALLY":
-                return AST.F_STL_Expr(op, s[2], s[4], s[7])
+                return AST.F_Expr(op, s[2], s[4], s[7])
             else:
                 raise error.Parser_Error("STL Operator: " + op + " not recognized.")
 
@@ -181,7 +197,7 @@ class Parser:
             """
             op = s[0].getstr()
             if op == "X":
-                return AST.X_STL_Expr(op, s[2], s[5])
+                return AST.X_Expr(op, s[2], s[5])
 
         @pg.production(
             "expr : L_PAREN expr R_PAREN IDENTIFIER L_SQ_BRACE expr COMMA expr R_SQ_BRACE L_PAREN expr R_PAREN")
@@ -198,13 +214,13 @@ class Parser:
             op = s[3].getstr()
 
             if op == "U":
-                return AST.U_STL_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
+                return AST.U_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
             elif op == "R":
-                return AST.R_STL_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
+                return AST.R_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
             elif op == "W":
-                return AST.W_STL_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
+                return AST.W_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
             elif op == "M":
-                return AST.M_STL_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
+                return AST.M_Expr(s[3].getstr(), s[5], s[7], s[1], s[10])
 
         @pg.production("expr : val")
         def single_val_expr(s):
