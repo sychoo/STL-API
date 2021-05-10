@@ -26,17 +26,19 @@ Usage:
 class Interpreter:
 
     def __init__(self, global_begin_time: int, signal: Signal,
-                 lexer: Optional[Lexer] = Lexer(), parser: Optional[Parser] = Parser(), debug: bool = False):
+                #  lexer: Optional[Lexer] = Lexer(), parser: Optional[Parser] = Parser(),
+                # parsed_expr, 
+                  debug: bool = False):
         self.global_begin_time = global_begin_time
         self.signal = signal
-        self.lexer = lexer
-        self.parser = parser
+        # self.lexer = lexer
+        # self.parser = parser
         self.debug = debug
 
-    def interpret(self, expr) -> Eval_Result:
+    def interpret(self, parsed_expr) -> Eval_Result:
         """start the evaluation process, and return the evaluation result"""
-        token_stream = self.lexer.lex(expr)
-        parsed_expr = self.parser.parse(token_stream)
+        # token_stream = self.lexer.lex(expr)
+        # parsed_expr = self.parser.parse(token_stream)
 
         # initialize type context, type check the AST
         type_ctx = ctx.Type_Context.get_empty_context()

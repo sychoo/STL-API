@@ -1,7 +1,7 @@
 from abc import ABC
 
 from stl.parsing.ast_collection.core import Primitive_Expr, Expr, Val
-from stl.parsing.ast_collection.val import Boolean_Val, Float_Val
+from stl.parsing.ast_collection.val import Boolean_Val, Float_Val, Int_Val
 from stl.tool import String_Builder
 import stl.error as error
 import stl.tool as tool
@@ -121,7 +121,7 @@ class Ternary_Expr(Primitive_Expr, ABC):
         return self.opd1_val
 
     @opd1.setter
-    def opd1(self, opd: str):
+    def opd1(self, opd):
         self.opd1_val = opd
 
     @property
@@ -129,7 +129,7 @@ class Ternary_Expr(Primitive_Expr, ABC):
         return self.opd2_val
 
     @opd2.setter
-    def opd2(self, opd: str):
+    def opd2(self, opd):
         self.opd2_val = opd
 
     @property
@@ -137,7 +137,7 @@ class Ternary_Expr(Primitive_Expr, ABC):
         return self.opd3_val
 
     @opd3.setter
-    def opd3(self, opd: str):
+    def opd3(self, opd):
         self.opd3_val = opd
 
     def __str__(self):
@@ -160,6 +160,21 @@ class Chain_Comp_Expr(Ternary_Expr, ABC):
     def __init__(self, op1: str, op1_type: str,
                  op2: str, op2_type: str, opd1: Expr, opd2: Expr, opd3: Expr):
         super().__init__(op1, op1_type, op2, op2_type, opd1, opd2, opd3)
+
+    def weaken(self, option: str, *args):
+        # print(len(args))
+        # print(self.op1_type)
+        # print(self.op2_type)
+
+        # const </<= X </<= const, args = (x, y)
+        if len(args) == 2 and option == "ap-range" and (self.op1_type == "LESS" or self.op1_type == "LESS_EQUAL") and (self.op2_type == "LESS" or self.op2_type == "LESS_EQUAL"):
+            self.opd1 = Binary_Arith_Expr(
+                "-", "MINUS", self.opd1, Int_Val(py_obj=args[0]))
+            self.opd3 = Binary_Arith_Expr(
+                "+", "PLUS", self.opd3, Int_Val(py_obj=args[1]))
+        
+        else:
+            raise RuntimeError("Not Implemented")
 
     def eval(self, eval_context, embedded=False):
         # desugar the chain comparison expression to two binary comparison expressions
@@ -223,6 +238,18 @@ class Binary_Expr(Non_Ternary_Expr, ABC):
 class Binary_Comp_Expr(Binary_Expr):
     """expr super class for binary comparison expression"""
 
+    def weaken(self, option: str, *args):
+        # X </<= const, args = (x)
+        if len(args) == 1 and option == "ap-range" and (self.op_type == "LESS" or self.op_type == "LESS_EQUAL"):
+            self.rhs = Binary_Arith_Expr("+", "PLUS", self.rhs, Int_Val(py_obj=args[0]))
+
+        # X >/>= const, args = (x)
+        elif len(args) == 1 and option == "ap-range" and (self.op_type == "GREATER" or self.op_type == "GREATER_EQUAL"):
+            self.rhs = Binary_Arith_Expr("-", "MINUS", self.rhs, Int_Val(py_obj=args[0]))
+        
+        else:
+            raise RuntimeError("Not Implemented!")
+            
     def type_check(self, type_context):
         # note that list of values are type checked to the common types in the list
         lhs_type = self.lhs.type_check(type_context)
@@ -510,7 +537,6 @@ class Binary_Logic_Expr(Binary_Expr):
         # check whether the operator is quantifiable
         return self.op_type == "LOGICAL_AND" or self.op_type == "LOGICAL_OR"
 
-
     def robustness(self, lhs, rhs):
         """for atomic calculation - both lhs and rhs have to be a Int_Val or Float_Val"""
         # TODO: convert all result to float values
@@ -522,26 +548,26 @@ class Binary_Logic_Expr(Binary_Expr):
 
         elif self.op_type == "LOGICAL_OR":
             result = Float_Val(py_obj=max(lhs.value, rhs.value))
-        
+
         else:
-            raise RuntimeError("operator " + str(self.op_type) + " is not quantifiable!")
+            raise RuntimeError(
+                "operator " + str(self.op_type) + " is not quantifiable!")
         return result
 
     def compute_satisfaction(self, lhs, rhs, eval_context, embedded: bool):
         satisfy_list = list()
 
         if isinstance(lhs, tuple):
-            lhs, _ = lhs # unpack lhs satisfaction value
-        
-        if isinstance(rhs, tuple):
-            rhs, _ = rhs # unpack rhs satisfaction value
+            lhs, _ = lhs  # unpack lhs satisfaction value
 
+        if isinstance(rhs, tuple):
+            rhs, _ = rhs  # unpack rhs satisfaction value
 
         # lhs = [...]
-        # rhs = Val   
+        # rhs = Val
         if (isinstance(lhs, list)) and (not isinstance(rhs, list)):
             raise RuntimeError("Form not allowed! lhs = list, rhs = Val")
-        
+
         # lhs = Val
         # rhs = [...]
         elif (not isinstance(lhs, list)) and (isinstance(rhs, list)):
@@ -581,22 +607,20 @@ class Binary_Logic_Expr(Binary_Expr):
             # if it is embedded in the STL expr, return a list of them
             return satisfy_list
 
-
     def compute_robustness(self, lhs, rhs, eval_context, embedded: bool):
         robustness_list = list()
 
         if isinstance(lhs, tuple):
-            _, lhs = lhs # unpack lhs robustness value
-        
-        if isinstance(rhs, tuple):
-            _, rhs = rhs # unpack rhs robustness value
+            _, lhs = lhs  # unpack lhs robustness value
 
+        if isinstance(rhs, tuple):
+            _, rhs = rhs  # unpack rhs robustness value
 
         # lhs = [...]
-        # rhs = Val   
+        # rhs = Val
         if (isinstance(lhs, list)) and (not isinstance(rhs, list)):
             raise RuntimeError("Form not allowed! lhs = list, rhs = Val")
-        
+
         # lhs = Val
         # rhs = [...]
         elif (not isinstance(lhs, list)) and (isinstance(rhs, list)):
@@ -616,7 +640,7 @@ class Binary_Logic_Expr(Binary_Expr):
             for index in range(lhs_list_len):
                 robustness_val = self.robustness(lhs[index], rhs[index])
                 # _, robustness_val = Binary_Logic_Expr(
-                    # self.op, self.op_type, lhs[index], rhs[index]
+                # self.op, self.op_type, lhs[index], rhs[index]
                 # ).eval(eval_context, embedded=True)
                 robustness_list.append(robustness_val)
 
@@ -637,7 +661,6 @@ class Binary_Logic_Expr(Binary_Expr):
             lhs, rhs, eval_context, embedded)
         robustness_result: Optional[Union[Float_Val, list]] = None
 
-
         if embedded and self.is_quantifiable_op():
             robustness_result = self.compute_robustness(
                 lhs, rhs, eval_context, embedded)
@@ -645,6 +668,7 @@ class Binary_Logic_Expr(Binary_Expr):
 
         else:
             return satisfy_result
+
 
 class Binary_Arith_Expr(Binary_Expr):
     """stores binary logic operation expressions AST"""
@@ -663,7 +687,7 @@ class Binary_Arith_Expr(Binary_Expr):
 
         return result
 
-    def eval(self, eval_context, embedded = False):
+    def eval(self, eval_context, embedded=False):
         # evaluate both left and right side expressions
         lhs = self.lhs.eval(eval_context)
         rhs = self.rhs.eval(eval_context)
@@ -716,7 +740,7 @@ class Unary_Logic_Expr(Unary_Expr):
     def type_check(self, type_context):
         return self.rhs.type_check(type_context)
 
-    def eval(self, eval_context, embedded = False):
+    def eval(self, eval_context, embedded=False):
         # evaluate both left and right side expressions
         self.rhs = self.rhs.eval(eval_context)
 
@@ -738,7 +762,7 @@ class Unary_Arith_Expr(Unary_Expr):
         result = self.rhs.type_check(type_context)
         return result
 
-    def eval(self, eval_context, embedded = False):
+    def eval(self, eval_context, embedded=False):
         # evaluate both left and right side expressions
         rhs = self.rhs.eval(eval_context)
 

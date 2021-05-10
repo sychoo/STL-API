@@ -3,9 +3,9 @@
 ## Table of Contents
 - [Motivation](#motivation)
 - [Installation](#installation)
-- [Usage](#usage)
+- [Usage (Python API)](#usage-python-api)
   - [Python API](#python-api)
-  - [REPL](#repl)
+- [Usage (REPL)](#usage-repl)
 - [Structure](#structure)
   - [Project Structure](#project-structure)
   - [File Structure](#file-structure)

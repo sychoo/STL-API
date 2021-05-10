@@ -20,6 +20,10 @@ class Test_Example_Files(unittest.TestCase):
         import stl.example.api.stl.main
         tool.print_success("STL TEST PASSED")
 
+    def test_weakening(self):
+        import stl.example.api.stl.weaken
+        tool.print_success("WEAKENING TEST PASSED")
+
     def test_lexer(self):
         subprocess.call(stl_path + "/stl/example/parsing/lex.sh")
         tool.print_success("LEXER TEST PASSED")

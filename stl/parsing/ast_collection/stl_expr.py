@@ -1,5 +1,6 @@
 # 2020-11-06 07:57:20
 
+from stl.parsing.ast_collection.primitive_expr import Binary_Arith_Expr, Binary_Comp_Expr
 from stl.tool import String_Builder
 import stl.error as error
 
@@ -205,10 +206,16 @@ class G_Expr(Unary_STL_Expr, ABC):
 
     #     return result
 
-    def weaken(self, option: str, *param):
+    def weaken(self, option: str, *args):
         """weaken the STL formula on the AST level"""
+        if option == "ap-range":
+            self.begin_condition.weaken(option, *args)
+        elif option == "time-range":
+            self.begin_time = Binary_Arith_Expr("+", "PLUS", self.begin_time, Int_Val(py_obj=args[0]))
+            self.end_time = Binary_Arith_Expr("-", "MINUS", self.end_time, Int_Val(py_obj=args[1]))
+        else:
+            raise RuntimeError("Not Implemented")
 
-        pass
     def eval(self, eval_context):
         super().eval(eval_context)
 
