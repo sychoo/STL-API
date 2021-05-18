@@ -6,6 +6,21 @@ signal = Signal(py_dict={"0": {"content": {"x": 1, "y": 2}}, "1": {
                 "content": {"x": 2, "y": 1}}})  # signal to be evaluated
 print(signal)
 
+# {
+#     "0": {
+#         "content": {
+#             "x": 1,
+#             "y": 2
+#         }
+#     },
+#     "1": {
+#         "content": {
+#             "x": 2,
+#             "y": 1
+#         }
+#     }
+# }
+
 
 
 # print("satisfaction value: " + str(stl_eval.satisfy))

@@ -44,6 +44,7 @@ class Interpreter:
         type_ctx = ctx.Type_Context.get_empty_context()
         type_ctx.add(ast.Id_Val("global_begin_time"), types.Int())
         type_ctx.add(ast.Id_Val("signal"), types.Signal())
+
         parsed_expr.type_check(type_ctx)
 
         # initialize the evaluation context, evaluate the AST
@@ -89,8 +90,13 @@ def main():
     # note that debug mode allows interpreter to print the low-level AST instead of the high-level Eval_Result
     interpreter = Interpreter(global_begin_time, signal, debug=False)  # also initialize lexer and parser
 
+    lexer = Lexer()
+    parser = Parser()
+
     for expr in tool.repl(header="Please enter STL expressions to be interpreted."):
-        print(interpreter.interpret(expr))
+        token_stream = lexer.lex(expr)
+        parsed_expr = parser.parse(token_stream)
+        print(interpreter.interpret(parsed_expr))
 
 
 if __name__ == "__main__":
