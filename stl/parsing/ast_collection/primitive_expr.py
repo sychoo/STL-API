@@ -169,9 +169,9 @@ class Chain_Comp_Expr(Ternary_Expr, ABC):
         # const </<= X </<= const, args = (x, y)
         if len(args) == 2 and option == "ap-range" and (self.op1_type == "LESS" or self.op1_type == "LESS_EQUAL") and (self.op2_type == "LESS" or self.op2_type == "LESS_EQUAL"):
             self.opd1 = Binary_Arith_Expr(
-                "-", "MINUS", self.opd1, Int_Val(py_obj=args[0]))
+                "-", "MINUS", self.opd1.to_float(), Float_Val(py_obj=args[0]))
             self.opd3 = Binary_Arith_Expr(
-                "+", "PLUS", self.opd3, Int_Val(py_obj=args[1]))
+                "+", "PLUS", self.opd3.to_float(), Float_Val(py_obj=args[1]))
         
         else:
             raise RuntimeError("Not Implemented")
@@ -241,11 +241,11 @@ class Binary_Comp_Expr(Binary_Expr):
     def weaken(self, option: str, *args):
         # X </<= const, args = (x)
         if len(args) == 1 and option == "ap-range" and (self.op_type == "LESS" or self.op_type == "LESS_EQUAL"):
-            self.rhs = Binary_Arith_Expr("+", "PLUS", self.rhs, Int_Val(py_obj=args[0]))
+            self.rhs = Binary_Arith_Expr("+", "PLUS", self.rhs.to_float(), Float_Val(py_obj=args[0]))
 
         # X >/>= const, args = (x)
         elif len(args) == 1 and option == "ap-range" and (self.op_type == "GREATER" or self.op_type == "GREATER_EQUAL"):
-            self.rhs = Binary_Arith_Expr("-", "MINUS", self.rhs, Int_Val(py_obj=args[0]))
+            self.rhs = Binary_Arith_Expr("-", "MINUS", self.rhs.to_float(), Float_Val(py_obj=args[0]))
         
         else:
             raise RuntimeError("Not Implemented!")
@@ -417,8 +417,8 @@ class Binary_Comp_Expr(Binary_Expr):
     # embedded signals whether expression is embedded in STL Expr
     def eval(self, eval_context, embedded=False) -> Union[Val, list]:
         """note that satisfaction and robustness are separated"""
-        lhs = self.lhs.eval(eval_context)
-        rhs = self.rhs.eval(eval_context)
+        lhs = self.lhs.eval(eval_context, embedded)
+        rhs = self.rhs.eval(eval_context, embedded)
 
         satisfy_result: Union[Val, list] = self.compute_satisfaction(
             lhs, rhs, eval_context, embedded)
@@ -687,11 +687,12 @@ class Binary_Arith_Expr(Binary_Expr):
 
         return result
 
-    def eval(self, eval_context, embedded=False):
-        # evaluate both left and right side expressions
-        lhs = self.lhs.eval(eval_context)
-        rhs = self.rhs.eval(eval_context)
+    def is_quantifiable_op(self):
+        # check whether the operator is quantifiable
+        return self.op_type == "PLUS" or self.op_type == "MINUS" or self.op_type == "MULTIPLY" or self.op_type == "DIVIDE"
 
+    # compute atomic robustness/proceed with normal binary arithmetic calculation
+    def robustness(self, lhs, rhs):
         if self.op_type == "PLUS":
             result = lhs + rhs
         elif self.op_type == "MINUS":
@@ -704,8 +705,87 @@ class Binary_Arith_Expr(Binary_Expr):
             raise error.AST_Error(
                 "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
 
-        # the result is wrapped by primitive object
         return result
+
+    def compute_robustness(self, lhs, rhs, eval_context, embedded: bool):
+        robustness_list = list()
+
+        # lhs = [...]
+        # rhs = Val
+        if (isinstance(lhs, list)) and (not isinstance(rhs, list)):
+            for index in range(len(lhs)):
+                robustness_val = self.robustness(lhs[index], rhs)
+                robustness_list.append(robustness_val)
+
+        # lhs = Val
+        # rhs = [...]
+        elif (not isinstance(lhs, list)) and (isinstance(rhs, list)):
+            for index in range(len(rhs)):
+                robustness_val = self.robustness(lhs, rhs[index])
+                robustness_list.append(robustness_val)
+
+        # lhs = [...]
+        # rhs = [...]
+        elif (isinstance(lhs, list)) and (isinstance(rhs, list)):
+            # case when lhs is a list, but not the rhs
+            lhs_list_len = len(lhs)
+            rhs_list_len = len(rhs)
+
+            if lhs_list_len != rhs_list_len:
+                raise RuntimeError(
+                    "list values doesn't match! lhs = " + str(lhs) + " rhs = " + str(rhs))
+
+            for index in range(lhs_list_len):
+                robustness_val = self.robustness(lhs[index], rhs[index])
+                robustness_list.append(robustness_val)
+
+        # lhs = Val
+        # rhs = Val
+        else:
+            return self.robustness(lhs, rhs)
+
+        return robustness_list
+
+    def eval(self, eval_context, embedded=False):
+        # # evaluate both left and right side expressions
+        # lhs = self.lhs.eval(eval_context)
+        # rhs = self.rhs.eval(eval_context)
+
+        # if self.op_type == "PLUS":
+        #     result = lhs + rhs
+        # elif self.op_type == "MINUS":
+        #     result = lhs - rhs
+        # elif self.op_type == "MULTIPLY":
+        #     result = lhs * rhs
+        # elif self.op_type == "DIVIDE":
+        #     result = lhs / rhs
+        # else:
+        #     raise error.AST_Error(
+        #         "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
+
+        # # the result is wrapped by primitive object
+        # return result
+
+        lhs = self.lhs.eval(eval_context, embedded)
+        rhs = self.rhs.eval(eval_context, embedded)
+
+        # satisfy_result: Union[Val, list] = self.compute_satisfaction(
+        #     lhs, rhs, eval_context, embedded)
+        robustness_result: Optional[Union[Float_Val, list]] = None
+
+        if embedded and self.is_quantifiable_op():
+            robustness_result = self.compute_robustness(
+                lhs, rhs, eval_context, embedded)
+            return robustness_result
+
+        # not meta-variables if it is not embedded in an STL expression
+        elif not embedded:
+            robustness_result = self.robustness(lhs, rhs)
+
+        else:
+            raise RuntimeError("Not Implemented!")
+
+        return robustness_result
 
 
 ####################
@@ -740,19 +820,103 @@ class Unary_Logic_Expr(Unary_Expr):
     def type_check(self, type_context):
         return self.rhs.type_check(type_context)
 
+    def is_quantifiable_op(self):
+        # check whether the operator is quantifiable (for STL robustness)
+        return self.op_type == "LOGICAL_NOT"
+
+
+    def satisfy(self, rhs):
+        if self.op_type == "LOGICAL_NOT":
+            result = rhs.logical_not()
+        else:
+            raise RuntimeError(
+                "operator " + str(self.op_type) + " is not quantifiable!")
+        return result
+        
+    def robustness(self, rhs):
+        if self.op_type == "LOGICAL_NOT":
+            result = -rhs
+        else:
+            raise RuntimeError(
+                "operator " + str(self.op_type) + " is not quantifiable!")
+        return result
+
+    def compute_satisfaction(self, rhs, eval_context, embedded: bool):
+        satisfy_list = list()
+
+        if isinstance(rhs, tuple):
+            rhs, _ = rhs  # unpack rhs satisfaction value
+
+        # rhs = Val
+        if not isinstance(rhs, list):
+            return self.satisfy(rhs)
+
+        # rhs = [...]
+        elif isinstance(rhs, list):
+            for index in range(len(rhs)):
+                satisfy_val = self.satisfy(rhs[index])
+                satisfy_list.append(satisfy_val)
+
+        else:
+            raise RuntimeError("Unrecognizable rhs")
+
+        # depends whether expression is embedded in the STL expr, return single value if not embeded
+        if not embedded:
+            # if it is not embedded in the STL expr, return a single value
+            return Boolean_Val.logical_and_list(satisfy_list)
+        else:
+            # if it is embedded in the STL expr, return a list of them
+            return satisfy_list
+
+    
+    def compute_robustness(self, rhs, eval_context, embedded: bool):
+        robustness_list = list()
+
+        if isinstance(rhs, tuple):
+            _, rhs = rhs  # unpack rhs robustness value
+
+        # rhs = Val
+        if not isinstance(rhs, list):
+            # unable to compute robustness because rhs is an atomic value
+            # raise RuntimeError("Form not allowed! rhs = Val")
+            return self.robustness(rhs)
+
+        # rhs = [...]
+        elif isinstance(rhs, list):
+            for index in range(len(rhs)):
+                robustness_val = self.robustness(rhs[index])
+                robustness_list.append(robustness_val)
+
+        else:
+            raise RuntimeError("Unrecognized rhs")
+
+        return robustness_list
+
     def eval(self, eval_context, embedded=False):
         # evaluate both left and right side expressions
-        self.rhs = self.rhs.eval(eval_context)
+        rhs = self.rhs.eval(eval_context, embedded)
 
-        result = None
+        # result = None
 
-        if self.op_type == "LOGICAL_NOT":
-            result = self.rhs.logical_not()
+        satisfy_result: Union[Val, list] = self.compute_satisfaction(rhs, eval_context, embedded)
+        robustness_result: Optional[Union[Float_Val, list]] = None
+
+        if embedded and self.is_quantifiable_op():
+            robustness_result = self.compute_robustness(rhs, eval_context, embedded)
+            return satisfy_result, robustness_result
+
         else:
-            raise error.AST_Error(
-                "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
+            # case when the expression is not embedded in an STL expression
+            return satisfy_result
 
-        return result
+        # if self.op_type == "LOGICAL_NOT":
+        #     if embedded and self
+        #     result = rhs.logical_not()
+        # else:
+        #     raise error.AST_Error(
+        #         "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
+
+        # return result
 
 
 class Unary_Arith_Expr(Unary_Expr):
@@ -762,18 +926,58 @@ class Unary_Arith_Expr(Unary_Expr):
         result = self.rhs.type_check(type_context)
         return result
 
-    def eval(self, eval_context, embedded=False):
-        # evaluate both left and right side expressions
-        rhs = self.rhs.eval(eval_context)
+    def is_quantifiable_op(self):
+        # check whether the operator is quantifiable
+        return self.op_type == "PLUS" or self.op_type == "MINUS"
 
+    def robustness(self, rhs):
         result = None
 
         if self.op_type == "PLUS":
             result = rhs
         elif self.op_type == "MINUS":
-            result = -self.rhs
+            result = -rhs
         else:
             raise error.AST_Error(
                 "Operator \"" + str(self.op_type) + "\" for Binary Comparison Expression is invalid.")
 
         return result
+
+    def compute_robustness(self, rhs, eval_context, embedded: bool):
+        robustness_list = list()
+
+        # rhs = Val
+        if (not isinstance(rhs, list)):
+            return self.robustness(rhs)
+
+        # rhs = [...]
+        elif (isinstance(rhs, list)):
+            for index in range(len(rhs)):
+                robustness_val = self.robustness(rhs[index])
+                robustness_list.append(robustness_val)
+
+        else:
+            raise RuntimeError("Not Implemented!")
+
+        return robustness_list
+
+
+    def eval(self, eval_context, embedded=False):
+        # evaluate both left and right side expressions
+        rhs = self.rhs.eval(eval_context)
+
+        robustness_result: Optional[Union[Float_Val, list]] = None
+
+        if embedded and self.is_quantifiable_op():
+            robustness_result = self.compute_robustness(rhs, eval_context, embedded)
+            return robustness_result
+
+        # not meta-variables if it is not embedded in an STL expression
+        elif not embedded:
+            robustness_result = self.robustness(rhs)
+
+        else:
+            raise RuntimeError("Not Implemented!")
+
+        return robustness_result
+

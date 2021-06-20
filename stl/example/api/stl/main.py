@@ -5,6 +5,23 @@ time_begin = 0  # global begin time
 signal = Signal(py_dict={"0": {"content": {"x": 1, "y": 2}}, "1": {"content": {"x": 2, "y": 1}}})  # signal to be evaluated
 print(signal)
 
+# test unary robustness evaluation
+stl_spec = STL("G[0, 1](!(x > 0))")
+stl_eval = stl_spec.eval(time_begin, signal)
+assert stl_eval.robustness == -2.0
+
+stl_spec = STL("G[0, 1](!(x > -1))")
+stl_eval = stl_spec.eval(time_begin, signal)
+assert stl_eval.robustness == -3.0
+
+stl_spec = STL("G[0, 1]((x - 1) > 0)")
+stl_eval = stl_spec.eval(time_begin, signal)
+assert stl_eval.robustness == 0.0
+
+stl_spec = STL("G[0, 1]((-x) > 1)")
+stl_eval = stl_spec.eval(time_begin, signal)
+assert stl_eval.robustness == -3.0
+
 stl_spec = STL("1 + 1")
 stl_eval = stl_spec.eval(time_begin, signal)
 print(stl_spec.value, end=" = ")

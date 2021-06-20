@@ -26,11 +26,14 @@ class Type:
     def __str__(self):
         return self.type_str
 
-
+# Note that Int and Float belongs to the same type as both represents numbers
 class Int(Type):
     def __init__(self):
         super().__init__("Int")
-
+    def __eq__(self, other):
+        return other.type_str == "Int" or other.type_str == "Float"
+    def __ne__(self, other):
+        return not (self == other)
 
 class Boolean(Type):
     def __init__(self):
@@ -40,7 +43,10 @@ class Boolean(Type):
 class Float(Type):
     def __init__(self):
         super().__init__("Float")
-
+    def __eq__(self, other):
+        return other.type_str == "Int" or other.type_str == "Float"
+    def __ne__(self, other):
+        return not (self == other)
 
 class String(Type):
     def __init__(self):

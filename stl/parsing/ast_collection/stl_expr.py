@@ -211,8 +211,8 @@ class G_Expr(Unary_STL_Expr, ABC):
         if option == "ap-range":
             self.begin_condition.weaken(option, *args)
         elif option == "time-range":
-            self.begin_time = Binary_Arith_Expr("+", "PLUS", self.begin_time, Int_Val(py_obj=args[0]))
-            self.end_time = Binary_Arith_Expr("-", "MINUS", self.end_time, Int_Val(py_obj=args[1]))
+            self.begin_time = Binary_Arith_Expr("+", "PLUS", self.begin_time.to_float(), Float_Val(py_obj=args[0]))
+            self.end_time = Binary_Arith_Expr("-", "MINUS", self.end_time.to_float(), Float_Val(py_obj=args[1]))
         else:
             raise RuntimeError("Not Implemented")
 

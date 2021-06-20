@@ -1,18 +1,29 @@
 # STL API
 
 ## Table of Contents
-- [Motivation](#motivation)
-- [Installation](#installation)
-- [Usage (Python API)](#usage-python-api)
-  - [Python API](#python-api)
-- [Usage (REPL)](#usage-repl)
-- [Structure](#structure)
-  - [Project Structure](#project-structure)
-  - [File Structure](#file-structure)
-- [FAQ](#faq)
-  - [Common Issues](#common-issues)
-  - [Special Notes](#special-notes)
-- [Future Work](#future-work)
+- [STL API](#stl-api)
+  - [Table of Contents](#table-of-contents)
+  - [Motivation](#motivation)
+  - [Installation](#installation)
+    - [Configure system PATH](#configure-system-path)
+    - [Configure PYTHON PATH (for invoking STL API from other modules)](#configure-python-path-for-invoking-stl-api-from-other-modules)
+    - [Configure STL PATH (for unit testing and other repository referential operations)](#configure-stl-path-for-unit-testing-and-other-repository-referential-operations)
+    - [Reload `.zshrc` file](#reload-zshrc-file)
+    - [required Platform](#required-platform)
+    - [required Python packages](#required-python-packages)
+  - [Features](#features)
+  - [Usage (Python API)](#usage-python-api)
+    - [Simple Math Expressions](#simple-math-expressions)
+    - [Evaluate Signal with respect to STL Formula](#evaluate-signal-with-respect-to-stl-formula)
+    - [STL Formula Weakening](#stl-formula-weakening)
+  - [Usage (REPL)](#usage-repl)
+  - [Structure](#structure)
+    - [Project Structure](#project-structure)
+    - [File Structure](#file-structure)
+  - [FAQ](#faq)
+    - [Common Issues](#common-issues)
+    - [Special Notes](#special-notes)
+  - [Future Work](#future-work)
 
 ## Motivation
 STL API is used to evaluate **Signal Temporal Logic** specification with respect to
@@ -218,6 +229,15 @@ robustness  : -1.0
 - example folder is in stl folder for unit-test purpose, a symbolic link for example folder is created in the project root directory
 
 ## Future Work
+- Fixed the bug when adding an integer to a floating-point number in stl interpreter
+  ```
+  >>> 1 + 1.5
+  2
+  ```
+  possible fix, detect type mismatch, and coerce all int types to float types
+- create numeric type instead of using Ints and Floats
+  - reduce type check effort and automatically convert Ints to Floats
+
 - syntax for absolute value
   - `G[0, 1](|y| > 1)` means that the absolute value of y must be greater than 1 between time 0 and 1 of the signal
   

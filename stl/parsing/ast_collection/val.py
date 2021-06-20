@@ -78,6 +78,10 @@ class Int_Val(Primitive_Val):
     def __add__(self, rhs):
         """return Int_Val class type. Type signature not hardcoded for future modification"""
         # assume rhs is also a Int_Val type
+        # result = None
+        # if rhs.value_type == types.Float():
+        # result = Float_Val(self.value + rhs.value)
+        # else:
         result = Int_Val(self.value + rhs.value)
         return result
 
@@ -137,6 +141,10 @@ class Int_Val(Primitive_Val):
             result = Boolean_Val("false")
 
         return result
+    
+    def to_float(self):
+        return Float_Val(self.value)
+
 
 
 class Float_Val(Primitive_Val):
@@ -221,6 +229,9 @@ class Float_Val(Primitive_Val):
         for float_val in float_val_list:
             py_obj_list.append(float_val.value)
         return Float_Val(py_obj=min(py_obj_list))
+    
+    def to_float(self):
+        return self
 
 
 class String_Val(Primitive_Val):
